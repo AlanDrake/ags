@@ -198,6 +198,7 @@ public:
     virtual bool PlayVideo(const char *filename, bool useSound, VideoSkipType skipType, bool stretchToFullScreen);
     virtual bool SupportsGammaControl();
     virtual void SetGamma(int newGamma);
+    virtual void SetSoftGamma(int newGamma);
     virtual void UseSmoothScaling(bool enabled) { _smoothScaling = enabled; }
     virtual bool RequiresFullRedrawEachFrame() { return true; }
     virtual bool HasAcceleratedStretchAndFlip() { return true; }
@@ -251,6 +252,10 @@ private:
 
     LONG _allegroOriginalWindowStyle;
 
+    Bitmap* _softGammaLayer;
+    D3DBitmap* _softGammaLayerDDB;
+    SpriteDrawListEntry _softGammaSprite;
+
     void initD3DDLL();
     void InitializeD3DState();
     void set_up_default_vertices();
@@ -261,6 +266,7 @@ private:
     bool IsTextureFormatOk( D3DFORMAT TextureFormat, D3DFORMAT AdapterFormat );
     void create_screen_tint_bitmap();
     void _renderSprite(SpriteDrawListEntry *entry, bool globalLeftRightFlip, bool globalTopBottomFlip);
+    void create_soft_gamma_bitmap();
 };
 
 

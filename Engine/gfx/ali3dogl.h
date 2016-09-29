@@ -214,6 +214,7 @@ public:
     virtual bool PlayVideo(const char *filename, bool useSound, VideoSkipType skipType, bool stretchToFullScreen);
     virtual bool SupportsGammaControl();
     virtual void SetGamma(int newGamma);
+    virtual void SetSoftGamma(int newGamma);
     virtual void UseSmoothScaling(bool enabled) { _smoothScaling = enabled; }
     virtual bool RequiresFullRedrawEachFrame() { return true; }
     virtual bool HasAcceleratedStretchAndFlip() { return true; }

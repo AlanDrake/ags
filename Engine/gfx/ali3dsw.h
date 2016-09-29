@@ -170,6 +170,7 @@ public:
     virtual bool PlayVideo(const char *filename, bool useAVISound, VideoSkipType skipType, bool stretchToFullScreen);
     virtual bool SupportsGammaControl() ;
     virtual void SetGamma(int newGamma);
+    virtual void SetSoftGamma(int newGamma);
     virtual void UseSmoothScaling(bool enabled) { }
     virtual void EnableVsyncBeforeRender(bool enabled) { _autoVsync = enabled; }
     virtual void Vsync();

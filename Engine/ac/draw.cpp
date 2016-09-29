@@ -2063,6 +2063,9 @@ void draw_screen_background(Bitmap *ds) {
     if (play.screen_tint >= 0)
         invalidate_screen();
 
+    if (play.gamma_adjustment > 100) // TODO will be != 100 when darkening implemented
+        invalidate_screen();
+
     if (gfxDriver->RequiresFullRedrawEachFrame())
     {
         if (roomBackgroundBmp == NULL) 

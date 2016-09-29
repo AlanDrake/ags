@@ -314,6 +314,10 @@ void OGLGraphicsDriver::SetGamma(int newGamma)
 {
 }
 
+void OGLGraphicsDriver::SetSoftGamma(int newGamma)
+{
+}
+
 void OGLGraphicsDriver::SetGraphicsFilter(OGLGfxFilter *filter)
 {
   _filter = filter;

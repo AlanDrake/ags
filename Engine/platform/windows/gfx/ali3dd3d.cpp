@@ -199,6 +199,12 @@ D3DGraphicsDriver::D3DGraphicsDriver(IDirect3D9 *d3d)
   _legacyPixelShader = false;
   _allegroOriginalWindowStyle = 0;
   set_up_default_vertices();
+
+  _softGammaLayer = NULL;
+  _softGammaLayerDDB = NULL;
+  _softGammaSprite.skip = true;
+  _softGammaSprite.x = 0;
+  _softGammaSprite.y = 0;
 }
 
 void D3DGraphicsDriver::set_up_default_vertices()
@@ -762,6 +768,7 @@ bool D3DGraphicsDriver::Init(const DisplayMode &mode, const Size src_size, const
   {
     this->initD3DDLL();
     this->create_screen_tint_bitmap();
+    this->create_soft_gamma_bitmap();
   }
   catch (Ali3DException exception)
   {
@@ -799,6 +806,15 @@ void D3DGraphicsDriver::UnInit()
   }
   delete _screenTintLayer;
   _screenTintLayer = NULL;
+
+  if (_softGammaLayerDDB != NULL) 
+  {
+    this->DestroyDDB(_softGammaLayerDDB);
+    _softGammaLayerDDB = NULL;
+    _softGammaSprite.bitmap = NULL;
+  }
+  delete _softGammaLayer;
+  _softGammaLayer = NULL;
 
   dxmedia_shutdown_3d();
   gfx_driver = NULL;
@@ -1169,6 +1185,19 @@ void D3DGraphicsDriver::_render(GlobalFlipType flip, bool clearDrawListAfterward
   if (!_screenTintSprite.skip)
   {
     this->_renderSprite(&_screenTintSprite, false, false);
+  }
+
+  if (!_softGammaSprite.skip)
+  {
+    direct3ddevice->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_DESTCOLOR);
+    direct3ddevice->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_ONE);
+    /* TODO Darken fake gamma layer ( gamma < 100 )
+    direct3ddevice->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_DESTCOLOR);
+    direct3ddevice->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_ZERO);
+    */
+    this->_renderSprite(&_softGammaSprite, false, false);
+    direct3ddevice->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
+    direct3ddevice->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
   }
 
   direct3ddevice->EndScene();
@@ -1862,6 +1891,31 @@ bool D3DGraphicsFactory::Init()
         return false;
     }
     return true;
+}
+
+
+int _gamma = 0; // internal use for soft gamma, could be replaced by a global bool and get the value from play.gamma_adjustement
+void D3DGraphicsDriver::create_soft_gamma_bitmap() 
+{
+  _softGammaLayer = BitmapHelper::CreateBitmap(16, 16, this->_mode.ColorDepth);
+  _softGammaLayer = this->ConvertBitmapToSupportedColourDepth(_softGammaLayer);
+  _softGammaLayerDDB = (D3DBitmap*)this->CreateDDBFromBitmap(_softGammaLayer, false, false);
+  _softGammaSprite.bitmap = _softGammaLayerDDB;
+}
+
+void D3DGraphicsDriver::SetSoftGamma(int newGamma)
+{
+  int gamma = ( (newGamma-100)*255/100 );
+  if ( gamma != _gamma) {
+    _gamma = gamma;
+
+    _softGammaLayer->Clear(makecol_depth(_softGammaLayer->GetColorDepth(), gamma, gamma, gamma));
+    this->UpdateDDBFromBitmap(_softGammaLayerDDB, _softGammaLayer, false);
+    _softGammaLayerDDB->SetStretch(_srcRect.GetWidth(), _srcRect.GetHeight());
+    //_softGammaLayerDDB->SetTransparency(128);
+    
+    _softGammaSprite.skip = gamma<0;
+  }
 }
 
 } // namespace D3D

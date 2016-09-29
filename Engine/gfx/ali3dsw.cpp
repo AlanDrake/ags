@@ -255,6 +255,7 @@ void ALSoftwareGraphicsDriver::UnInit()
 bool ALSoftwareGraphicsDriver::SupportsGammaControl() 
 {
 #ifdef _WIN32
+  return 0; // [AVD] for some reason on my modern rig dxGammaControl is lying, need to investigate
 
   if (dxGammaControl != NULL) 
   {
@@ -280,6 +281,12 @@ void ALSoftwareGraphicsDriver::SetGamma(int newGamma)
 
   dxGammaControl->SetGammaRamp(0, &gammaRamp);
 #endif
+}
+
+int _gamma = 0; // internal use for soft gamma, could be replaced by a global bool and get the value from play.gamma_adjustement
+void ALSoftwareGraphicsDriver::SetSoftGamma(int newGamma)
+{
+    _gamma = (newGamma-100)*255/100;
 }
 
 Bitmap *ALSoftwareGraphicsDriver::ConvertBitmapToSupportedColourDepth(Bitmap *bitmap)
@@ -389,6 +396,13 @@ void ALSoftwareGraphicsDriver::RenderToBackBuffer()
     }
     tint_image(virtualScreen, _spareTintingScreen, _tint_red, _tint_green, _tint_blue, 100, 255);
     Blit(_spareTintingScreen, virtualScreen, 0, 0, 0, 0, _spareTintingScreen->GetWidth(), _spareTintingScreen->GetHeight());*/
+  }
+
+  if (_gamma>0 && (_mode.ColorDepth > 8))
+  {
+    set_add_blender(_gamma, _gamma, _gamma, _gamma);
+    virtualScreen->TransBlendBlt(virtualScreen, 0, 0);
+    // Note: like screen tint, the screen will need to be invalidated
   }
 
   ClearDrawList();
