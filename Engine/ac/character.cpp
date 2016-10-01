@@ -89,6 +89,7 @@ extern int cur_mode;
 extern int screen_is_dirty;
 extern CCCharacter ccDynamicCharacter;
 extern CCInventory ccDynamicInv;
+extern float direction_ratio;
 
 //--------------------------------
 
@@ -329,6 +330,8 @@ DirectionalLoop GetDirectionalLoop(CharacterInfo *chinfo, int x_diff, int y_diff
 {
     DirectionalLoop next_loop = kDirLoop_Left; // NOTE: default loop was Left for some reason
 
+    x_diff /= direction_ratio;//1.345; // adjustment perspective
+
     const ViewStruct &chview  = views[chinfo->view];
     const bool new_version    = loaded_game_file_version > kGameVersion_272;
     const bool has_down_loop  = ((chview.numLoops > kDirLoop_Down)  && (chview.loops[kDirLoop_Down].numFrames > 0));
@@ -340,13 +343,13 @@ DirectionalLoop GetDirectionalLoop(CharacterInfo *chinfo, int x_diff, int y_diff
                                 ((chview.numLoops > kDirLoop_Right) && (chview.loops[kDirLoop_Right].numFrames > 0));
     const bool has_diagonal_loops = useDiagonal(chinfo) == 0; // NOTE: useDiagonal returns 0 for "true"
 
-    const bool want_horizontal = (abs(y_diff) < abs(x_diff)) ||
+    const bool want_horizontal = (abs(y_diff) < abs(x_diff)/2) ||
         new_version && (!has_down_loop || !has_up_loop) ||
         // NOTE: <= 2.72 games switch to horizontal loops only if both vertical ones are missing
         !new_version && (!has_down_loop && !has_up_loop);
     if (want_horizontal)
     {
-        const bool want_diagonal = has_diagonal_loops && (abs(y_diff) > abs(x_diff) / 2);
+        const bool want_diagonal = has_diagonal_loops && (abs(y_diff) > abs(x_diff));
         if (!has_left_loop && !has_right_loop)
         {
             next_loop = kDirLoop_Down;

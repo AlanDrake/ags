@@ -588,6 +588,8 @@ builtin managed struct Game {
   readonly import static attribute int AudioClipCount;
   /// Accesses the audio clips collection.
   readonly import static attribute AudioClip *AudioClips[];
+  /// [exp] Sets a different ratio for the way direction is calculated (default 1.0)
+  import static void SetDirectionRatio(float ratio);
 #endif
 };
 
