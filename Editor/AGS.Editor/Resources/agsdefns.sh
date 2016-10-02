@@ -497,6 +497,8 @@ builtin managed struct Room {
   import static bool SetTextProperty(const string property, const string value);
   /// Performs default processing of a mouse click at the specified co-ordinates.
   import static void ProcessClick(int x, int y, CursorMode);
+  /// [exp] Checks if the specified room exists
+  import static bool Exists(int room);   // $AUTOCOMPLETESTATICONLY$
 #endif
 };
 
