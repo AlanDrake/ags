@@ -44,6 +44,7 @@ namespace AGS.Editor
         private const string MENU_ITEM_COPY_TO_CLIPBOARD = "CopyToClipboard";
         private const string MENU_ITEM_EXPORT_SPRITE = "ExportSprite";
         private const string MENU_ITEM_REPLACE_FROM_FILE = "ReplaceFromFile";
+        private const string MENU_ITEM_REPLACE_FROM_FILE_MULTI = "ReplaceFromFileMulti";
         private const string MENU_ITEM_REPLACE_FROM_CLIPBOARD = "ReplaceFromClipboard";
         private const string MENU_ITEM_REPLACE_FROM_PREVIOUS = "ReplaceFromPrevious";
         private const string MENU_ITEM_DELETE_SPRITE = "DeleteSprite";
@@ -178,11 +179,11 @@ namespace AGS.Editor
             spriteList.Clear();
             _spriteImages.Images.Clear();
             _spriteImages.ColorDepth = ColorDepth.Depth16Bit;
-            _spriteImages.ImageSize = new Size(64, 64);
+            _spriteImages.ImageSize = new Size(128, 128);
             _spriteImages.TransparentColor = Color.Pink;
             foreach (Sprite sprite in folder.Sprites)
             {
-                Bitmap bmp = Utilities.GetBitmapForSpriteResizedKeepingAspectRatio(sprite, 64, 64, false, true, Color.Pink);
+                Bitmap bmp = Utilities.GetBitmapForSpriteResizedKeepingAspectRatio(sprite, 128, 128, false, true, Color.Pink);
                 _spriteImages.Images.Add(sprite.Number.ToString(), bmp);
                 spriteList.Items.Add(sprite.Number.ToString(), sprite.Number.ToString(), sprite.Number.ToString());
             }
@@ -471,6 +472,24 @@ namespace AGS.Editor
             impWin.Dispose();
         }
 
+        private void ReplaceMultiSprite(Bitmap bmp, Sprite[] sprites, string sourceFileName)
+        {
+            bool useAlphaChannel = AskAboutAlphaChannel(bmp);
+            SpriteImportWindow impWin = new SpriteImportWindow(bmp);
+            if (impWin.ShowDialog() == DialogResult.OK)
+            {
+                for (int i = 0; (i < sprites.Length) && (i < impWin.SelectedBitmaps.Count); i++)
+                {
+                    Bitmap bmpToImport = impWin.SelectedBitmaps[i];
+                    Factory.NativeProxy.ReplaceSpriteWithBitmap(sprites[i], bmpToImport, (SpriteImportMethod)SpriteImportWindow.SpriteImportMethod, impWin.RemapToGamePalette, impWin.UseBackgroundSlots, useAlphaChannel);
+                    sprites[i].SourceFile = string.Empty;
+                }
+
+                RefreshSpriteDisplay();
+            }
+            impWin.Dispose();
+        }
+
         public void DeleteKeyPressed()
         {
             if ((folderList.Focused) && (folderList.SelectedNode != null))
@@ -571,6 +590,26 @@ namespace AGS.Editor
                     ReplaceSpriteUsingImportWindow(fileName, sprite);
                 }
             }
+
+            else if (item.Name == MENU_ITEM_REPLACE_FROM_FILE_MULTI)
+            {
+                string fileName = Factory.GUIController.ShowOpenFileDialog("Replace sprites...", GUIController.IMAGE_FILE_FILTER);
+                if (fileName != null)
+                {
+                    Sprite[] selectedSprites = new Sprite[spriteList.SelectedItems.Count];
+                    for (int i = 0; i < selectedSprites.Length; i++)
+                    {
+                        selectedSprites[i] = FindSpriteByNumber(Convert.ToInt32(spriteList.SelectedItems[i].Name));
+                        if (selectedSprites[i] == null)
+                        {
+                            throw new AGSEditorException("Internal error: selected sprite not in folder");
+                        }
+                    }
+                    //Sprite sprite = FindSpriteByNumber(_spriteNumberOnMenuActivation);
+                    ReplaceMultiSpriteUsingImportWindow(fileName, selectedSprites);
+                }
+            }
+
             else if (item.Name == MENU_ITEM_REPLACE_FROM_CLIPBOARD)
             {
                 if ((Clipboard.ContainsImage()) && (Clipboard.GetImage() is Bitmap))
@@ -1185,6 +1224,20 @@ namespace AGS.Editor
             }
         }
 
+        private void ReplaceMultiSpriteUsingImportWindow(string fileName, Sprite[] sprites)
+        {
+            try
+            {
+                Bitmap bmp = LoadSpriteFileFromDisk(fileName);
+                ReplaceMultiSprite(bmp, sprites, fileName);
+				SetAsLastImportedSprite(bmp, fileName);
+            }
+            catch (Exception ex)
+            {
+                Factory.GUIController.ShowMessage("There was an error importing the file. The error message was: '" + ex.Message + "'. Please try again", MessageBoxIcon.Warning);
+            }
+        }
+        
         private void ImportMultipleGIFFrames(string fileName)
         {
             try
@@ -1258,6 +1311,7 @@ namespace AGS.Editor
                     {
                         menuItem.Enabled = false;
                     }
+                    menu.Items.Add(new ToolStripMenuItem("Replace selected sprites from file...", null, onClick, MENU_ITEM_REPLACE_FROM_FILE_MULTI));
                 }
                 menu.Items.Add(new ToolStripMenuItem("Replace sprite(s) from source...", null, onClick, MENU_ITEM_REPLACE_FROM_SOURCE));
                 menu.Items.Add(new ToolStripSeparator());
