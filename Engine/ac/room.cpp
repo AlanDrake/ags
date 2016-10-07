@@ -218,13 +218,8 @@ const char* Room_GetMessages(int index) {
 bool Room_Exists(int room)
 {
     String room_filename;
-    Common::Stream *file;
     room_filename.Format("room%d.crm", room);
-    file = Common::AssetManager::OpenAsset(room_filename);
-    if (file == NULL)
-       return false;
-    delete file;
-    return true;
+    return Common::AssetManager::DoesAssetExist(room_filename);
 }
 
 //=============================================================================
