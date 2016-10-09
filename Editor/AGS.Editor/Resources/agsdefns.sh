@@ -2034,6 +2034,8 @@ builtin managed struct Object {
   import bool SetProperty(const string property, int value);
   /// Sets a text custom property for this object.
   import bool SetTextProperty(const string property, const string value);
+  /// Gets/sets the blending mode for this object..
+  import attribute int  BlendMode;
 #endif
 
   int reserved[2];  // $AUTOCOMPLETEIGNORE$
