@@ -34,6 +34,7 @@ void CharacterExtras::ReadFromFile(Stream *in)
     process_idle_this_time = in->ReadInt8();
     slow_move_counter = in->ReadInt8();
     animwait = in->ReadInt16();
+    blend_mode = in->ReadInt16();
 }
 
 void CharacterExtras::WriteToFile(Stream *out)
@@ -53,4 +54,5 @@ void CharacterExtras::WriteToFile(Stream *out)
     out->WriteInt8(process_idle_this_time);
     out->WriteInt8(slow_move_counter);
     out->WriteInt16(animwait);
+    out->WriteInt16(blend_mode);
 }

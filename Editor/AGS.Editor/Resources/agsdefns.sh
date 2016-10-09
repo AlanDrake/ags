@@ -2224,6 +2224,8 @@ builtin managed struct Character {
   import attribute int  ThinkView;
   /// Gets/sets the character's current transparency level.
   import attribute int  Transparency;
+  /// Gets/sets the character's current blend mode.
+  import attribute int  BlendMode;
   /// Gets/sets whether the character turns on the spot to face the correct direction before walking.
   import attribute bool TurnBeforeWalking;
   /// Gets the character's current view number.

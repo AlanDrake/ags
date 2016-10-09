@@ -1534,6 +1534,20 @@ void Character_SetTransparency(CharacterInfo *chaa, int trans) {
     chaa->transparency = GfxDef::Trans100ToLegacyTrans255(trans);
 }
 
+int Character_GetBlendMode(CharacterInfo *chaa) {
+
+    return charextra[chaa->index_id].blend_mode;
+}
+
+void Character_SetBlendMode(CharacterInfo *chaa, int blendMode) {
+/*
+    if ((blendMode < 0) || (blendMode > 4))
+        quit("!SetBlendMode: invalid blend mode");
+*/
+    charextra[chaa->index_id].blend_mode = blendMode;
+}
+
+
 int Character_GetTurnBeforeWalking(CharacterInfo *chaa) {
 
     if (chaa->flags & CHF_NOTURNING)
@@ -3647,6 +3661,18 @@ RuntimeScriptValue Sc_Character_SetZ(void *self, const RuntimeScriptValue *param
     API_OBJCALL_VOID_PINT(CharacterInfo, Character_SetZ);
 }
 
+// int (CharacterInfo *chaa)
+RuntimeScriptValue Sc_Character_GetBlendMode(void *self, const RuntimeScriptValue *params, int32_t param_count)
+{
+    API_OBJCALL_INT(CharacterInfo, Character_GetBlendMode);
+}
+
+// void (CharacterInfo *chaa, int blend_mode)
+RuntimeScriptValue Sc_Character_SetBlendMode(void *self, const RuntimeScriptValue *params, int32_t param_count)
+{
+    API_OBJCALL_VOID_PINT(CharacterInfo, Character_SetBlendMode);
+}
+
 //=============================================================================
 //
 // Exclusive API for Plugins
@@ -3808,6 +3834,8 @@ void RegisterCharacterAPI()
 	ccAddExternalObjectFunction("Character::set_Z",                     Sc_Character_SetZ);
 	ccAddExternalObjectFunction("Character::get_z",                     Sc_Character_GetZ);
 	ccAddExternalObjectFunction("Character::set_z",                     Sc_Character_SetZ);
+	ccAddExternalObjectFunction("Character::get_BlendMode",             Sc_Character_GetBlendMode);
+	ccAddExternalObjectFunction("Character::set_BlendMode",             Sc_Character_SetBlendMode);
 
     /* ----------------------- Registering unsafe exports for plugins -----------------------*/
 

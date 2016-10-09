@@ -1038,8 +1038,7 @@ void add_thing_to_draw(IDriverDependantBitmap* bmp, int x, int y, int trans, boo
 void clear_sprite_list() {
     sprlistsize=0;
 }
-void add_to_sprite_list(IDriverDependantBitmap* spp, int xx, int yy, int baseline, int trans, int sprNum, bool isWalkBehind) {
-
+void add_to_sprite_list(IDriverDependantBitmap* spp, int xx, int yy, int baseline, int trans, int sprNum, bool isWalkBehind, int blendMode) {
     // completely invisible, so don't draw it at all
     if (trans == 255)
         return;
@@ -1054,6 +1053,7 @@ void add_to_sprite_list(IDriverDependantBitmap* spp, int xx, int yy, int baselin
     sprlist[sprlistsize].x=xx;
     sprlist[sprlistsize].y=yy;
     sprlist[sprlistsize].transparent=trans;
+    sprlist[sprlistsize].blendMode=blendMode;
 
     if (walkBehindMethod == DrawAsSeparateSprite)
         sprlist[sprlistsize].takesPriorityIfEqual = !isWalkBehind;
@@ -2021,7 +2021,7 @@ void prepare_characters_for_drawing() {
         // alpha channel was lost in the tinting process)
         //if (((tint_level) && (tint_amount < 100)) || (light_level))
         //sppic = -1;
-        add_to_sprite_list(actspsbmp[useindx], atxp + chin->pic_xoffs, atyp + chin->pic_yoffs, usebasel, chin->transparency, sppic);
+        add_to_sprite_list(actspsbmp[useindx], atxp + chin->pic_xoffs, atyp + chin->pic_yoffs, usebasel, chin->transparency, sppic, false, charextra[chin->index_id].blend_mode);
 
         chin->actx=atxp+offsetx;
         chin->acty=atyp+offsety;
@@ -2291,6 +2291,8 @@ void put_sprite_list_on_screen()
             {
                 thisThing->bmp->SetTransparency(thisThing->transparent);
             }
+
+            thisThing->bmp->SetBlendMode(thisThing->blendMode);
 
             gfxDriver->DrawSprite(thisThing->x, thisThing->y, thisThing->bmp);
         }
