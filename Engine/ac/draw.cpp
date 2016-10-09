@@ -1020,13 +1020,14 @@ void sort_out_char_sprite_walk_behind(int actspsIndex, int xx, int yy, int basel
 void clear_draw_list() {
     thingsToDrawSize = 0;
 }
-void add_thing_to_draw(IDriverDependantBitmap* bmp, int x, int y, int trans, bool alphaChannel) {
+void add_thing_to_draw(IDriverDependantBitmap* bmp, int x, int y, int trans, bool alphaChannel, int blendMode=0) {
     thingsToDrawList[thingsToDrawSize].pic = NULL;
     thingsToDrawList[thingsToDrawSize].bmp = bmp;
     thingsToDrawList[thingsToDrawSize].x = x;
     thingsToDrawList[thingsToDrawSize].y = y;
     thingsToDrawList[thingsToDrawSize].transparent = trans;
     thingsToDrawList[thingsToDrawSize].hasAlphaChannel = alphaChannel;
+    thingsToDrawList[thingsToDrawSize].blendMode = blendMode;
     thingsToDrawSize++;
     if (thingsToDrawSize >= MAX_THINGS_TO_DRAW - 1)
         quit("add_thing_to_draw: too many things added");
@@ -2243,7 +2244,7 @@ void draw_screen_overlay() {
                 (guis[aa].PopupStyle != kGUIPopupNoAutoRemove))
                 continue;
 
-            add_thing_to_draw(guibgbmp[aa], guis[aa].X, guis[aa].Y, guis[aa].Transparency, guis[aa].HasAlphaChannel());
+            add_thing_to_draw(guibgbmp[aa], guis[aa].X, guis[aa].Y, guis[aa].Transparency, guis[aa].HasAlphaChannel(), guis[aa].BlendMode);
 
             // only poll if the interface is enabled (mouseovers should not
             // work while in Wait state)

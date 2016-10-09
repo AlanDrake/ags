@@ -1651,6 +1651,8 @@ builtin managed struct GUI {
   import void Click(MouseButton);
   /// Performs default processing of a mouse click at the specified co-ordinates.
   import static void ProcessClick(int x, int y, MouseButton);
+  /// Gets/sets the blending mode for this GUI.
+  import attribute int BlendMode;
 #endif
   
   int   reserved[2];   // $AUTOCOMPLETEIGNORE$
