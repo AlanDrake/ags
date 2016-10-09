@@ -14,6 +14,7 @@
 
 #include "gfx/gfx_util.h"
 #include "gfx/blender.h"
+#include "../windows/include/allegro/internal/aintern.h"
 
 // CHECKME: is this hack still relevant?
 #if defined(IOS_VERSION) || defined(ANDROID_VERSION) || defined(WINDOWS_VERSION)
@@ -29,6 +30,38 @@ using namespace Common;
 
 namespace GfxUtil
 {
+
+// [AVD]naive custom blenders
+  #define BLEND(bpp, r, g, b)   _blender_trans##bpp(makecol##bpp(r, g, b), y, n)
+// not very pretty but forces the original alpha of "x" to "blender_result"
+unsigned long _blender_mask_alpha24(unsigned long blender_result, unsigned long x, unsigned long y, unsigned long n)
+{
+  const unsigned long src_alpha = geta32(x);
+  const unsigned long alphainv = 255-src_alpha;
+  const unsigned long r = (getr24(blender_result)*src_alpha + alphainv*getr24(y))/255;
+  const unsigned long g = (getg24(blender_result)*src_alpha + alphainv*getg24(y))/255;
+  const unsigned long b = (getb24(blender_result)*src_alpha + alphainv*getb24(y))/255;
+  return r | g<<8 | b<<16;
+}
+// alegro's dodge blend was wrong, mine is not perfect either
+unsigned long _my_blender_dodge24(unsigned long x, unsigned long y, unsigned long n)
+{
+  const unsigned long h = (getr24(y)*n) / ( 256 - getr24(x) ); 
+  const unsigned long j = (getg24(y)*n) / ( 256 - getg24(x) );
+  const unsigned long k = (getb24(y)*n) / ( 256 - getb24(x) );
+  return BLEND(24, h>255?255:h, j>255?255:j, k>255?255:k);
+}
+unsigned long _blender_masked_dodge32(unsigned long x, unsigned long y, unsigned long n)
+{
+  return _blender_mask_alpha24(_my_blender_dodge24(x, y, n ), x, y, n);
+}
+unsigned long _blender_masked_add32(unsigned long x, unsigned long y, unsigned long n)
+{
+  return _blender_mask_alpha24(_blender_add24(x, y, n ), x, y, n);
+}
+// --
+
+
 
 typedef BLENDER_FUNC PfnBlenderCb;
 
@@ -49,6 +82,15 @@ static const BlendModeSetter BlendModeSets[kNumBlendModes] =
 {
     { NULL, NULL, NULL, NULL, NULL }, // kBlendMode_NoAlpha
     { _argb2argb_blender, _argb2rgb_blender, _rgb2argb_blender, _opaque_alpha_blender, NULL }, // kBlendMode_Alpha
+    { _blender_add24, _blender_masked_add32, _blender_add24, _blender_add24, NULL }, // kBlendMode_Add
+    { NULL, NULL, NULL, NULL, NULL }, // kBlendMode_Darken
+    { NULL, NULL, NULL, NULL, NULL }, // kBlendMode_Lighten
+    { _blender_multiply24, _blender_multiply24, _blender_multiply24, _blender_multiply24, NULL }, // kBlendMode_Multiply
+    { _blender_screen24, _blender_screen24, _blender_screen24, _blender_screen24, NULL }, // kBlendMode_Screen
+    { _blender_burn24, _blender_burn24, _blender_burn24, _blender_burn24, NULL }, // kBlendMode_Burn [wrong result]
+    { NULL, NULL, NULL, NULL }, // kBlendMode_Subtract
+    { _blender_difference24, _blender_difference24, _blender_difference24, _blender_difference24, NULL }, // kBlendMode_Exclusion [wrong result]
+    { _my_blender_dodge24, _blender_masked_dodge32, _my_blender_dodge24, _my_blender_dodge24, NULL }, // kBlendMode_Dodge
     // NOTE: add new modes here
 };
 
