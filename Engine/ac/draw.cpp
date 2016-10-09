@@ -2164,11 +2164,11 @@ void draw_screen_overlay() {
     for (gg=0;gg<numscreenover;gg++) {
         // complete overlay draw in non-transparent mode
         if (screenover[gg].type == OVER_COMPLETE)
-            add_thing_to_draw(screenover[gg].bmp, screenover[gg].x, screenover[gg].y, TRANS_OPAQUE, false);
+            add_thing_to_draw(screenover[gg].bmp, screenover[gg].x, screenover[gg].y, TRANS_OPAQUE, false, screenover[gg].blendMode);
         else if (screenover[gg].type != OVER_TEXTMSG) {
             int tdxp, tdyp;
             get_overlay_position(gg, &tdxp, &tdyp);
-            add_thing_to_draw(screenover[gg].bmp, tdxp, tdyp, 0, screenover[gg].hasAlphaChannel);
+            add_thing_to_draw(screenover[gg].bmp, tdxp, tdyp, 0, screenover[gg].hasAlphaChannel, screenover[gg].blendMode);
         }
     }
 

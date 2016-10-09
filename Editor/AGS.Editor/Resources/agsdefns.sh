@@ -1158,6 +1158,8 @@ builtin managed struct Overlay {
   import attribute int X;
   /// Gets/sets the Y position on the screen where this overlay is displayed.
   import attribute int Y;
+  /// Gets/sets the blending mode of this overlay.
+  import attribute int BlendMode;
 };
 
 builtin managed struct DynamicSprite {

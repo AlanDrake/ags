@@ -32,6 +32,7 @@ void ScreenOverlay::ReadFromFile(Stream *in)
     associatedOverlayHandle = in->ReadInt32();
     hasAlphaChannel = in->ReadBool();
     positionRelativeToScreen = in->ReadBool();
+    blendMode = in->ReadInt32();
 }
 
 void ScreenOverlay::WriteToFile(Stream *out)
@@ -47,4 +48,5 @@ void ScreenOverlay::WriteToFile(Stream *out)
     out->WriteInt32(associatedOverlayHandle);
     out->WriteBool(hasAlphaChannel);
     out->WriteBool(positionRelativeToScreen);
+    out->WriteBool(blendMode);
 }
