@@ -13,6 +13,7 @@
 //=============================================================================
 
 #include "ac/characterextras.h"
+#include "ac/game_version.h"
 #include "util/stream.h"
 
 using AGS::Common::Stream;
@@ -34,7 +35,10 @@ void CharacterExtras::ReadFromFile(Stream *in)
     process_idle_this_time = in->ReadInt8();
     slow_move_counter = in->ReadInt8();
     animwait = in->ReadInt16();
-    blend_mode = in->ReadInt16();
+    if (loaded_game_file_version >= kGameVersion_341)
+      blend_mode = in->ReadInt16();
+    else
+      blend_mode = 0;
 }
 
 void CharacterExtras::WriteToFile(Stream *out)
@@ -54,5 +58,6 @@ void CharacterExtras::WriteToFile(Stream *out)
     out->WriteInt8(process_idle_this_time);
     out->WriteInt8(slow_move_counter);
     out->WriteInt16(animwait);
-    out->WriteInt16(blend_mode);
+    if (loaded_game_file_version >= kGameVersion_341)
+      out->WriteInt16(blend_mode);
 }
