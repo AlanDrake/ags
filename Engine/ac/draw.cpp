@@ -1018,13 +1018,14 @@ void sort_out_char_sprite_walk_behind(int actspsIndex, int xx, int yy, int basel
 void clear_draw_list() {
     thingsToDrawSize = 0;
 }
-void add_thing_to_draw(IDriverDependantBitmap* bmp, int x, int y, int trans, bool alphaChannel) {
+void add_thing_to_draw(IDriverDependantBitmap* bmp, int x, int y, int trans, bool alphaChannel, int blendMode=0) {
     thingsToDrawList[thingsToDrawSize].pic = NULL;
     thingsToDrawList[thingsToDrawSize].bmp = bmp;
     thingsToDrawList[thingsToDrawSize].x = x;
     thingsToDrawList[thingsToDrawSize].y = y;
     thingsToDrawList[thingsToDrawSize].transparent = trans;
     thingsToDrawList[thingsToDrawSize].hasAlphaChannel = alphaChannel;
+    thingsToDrawList[thingsToDrawSize].blendMode = blendMode;
     thingsToDrawSize++;
     if (thingsToDrawSize >= MAX_THINGS_TO_DRAW - 1)
         quit("add_thing_to_draw: too many things added");
@@ -1036,8 +1037,7 @@ void add_thing_to_draw(IDriverDependantBitmap* bmp, int x, int y, int trans, boo
 void clear_sprite_list() {
     sprlistsize=0;
 }
-void add_to_sprite_list(IDriverDependantBitmap* spp, int xx, int yy, int baseline, int trans, int sprNum, bool isWalkBehind) {
-
+void add_to_sprite_list(IDriverDependantBitmap* spp, int xx, int yy, int baseline, int trans, int sprNum, bool isWalkBehind, int blendMode) {
     // completely invisible, so don't draw it at all
     if (trans == 255)
         return;
@@ -1052,6 +1052,7 @@ void add_to_sprite_list(IDriverDependantBitmap* spp, int xx, int yy, int baselin
     sprlist[sprlistsize].x=xx;
     sprlist[sprlistsize].y=yy;
     sprlist[sprlistsize].transparent=trans;
+    sprlist[sprlistsize].blendMode=blendMode;
 
     if (walkBehindMethod == DrawAsSeparateSprite)
         sprlist[sprlistsize].takesPriorityIfEqual = !isWalkBehind;
@@ -1704,7 +1705,8 @@ void prepare_objects_for_drawing() {
                 actspsbmp[useindx]->SetLightLevel(0);
         }
 
-        add_to_sprite_list(actspsbmp[useindx],atxp,atyp,usebasel,objs[aa].transparent,objs[aa].num);
+        add_to_sprite_list(actspsbmp[useindx], atxp,atyp, usebasel, objs[aa].transparent, objs[aa].num, false, objs[aa].blend_mode);
+        
     }
 
 }
@@ -2019,7 +2021,7 @@ void prepare_characters_for_drawing() {
         // alpha channel was lost in the tinting process)
         //if (((tint_level) && (tint_amount < 100)) || (light_level))
         //sppic = -1;
-        add_to_sprite_list(actspsbmp[useindx], atxp + chin->pic_xoffs, atyp + chin->pic_yoffs, usebasel, chin->transparency, sppic);
+        add_to_sprite_list(actspsbmp[useindx], atxp + chin->pic_xoffs, atyp + chin->pic_yoffs, usebasel, chin->transparency, sppic, false, charextra[chin->index_id].blend_mode);
 
         chin->actx=atxp+offsetx;
         chin->acty=atyp+offsety;
@@ -2163,11 +2165,11 @@ void draw_screen_overlay() {
     for (gg=0;gg<numscreenover;gg++) {
         // complete overlay draw in non-transparent mode
         if (screenover[gg].type == OVER_COMPLETE)
-            add_thing_to_draw(screenover[gg].bmp, screenover[gg].x, screenover[gg].y, TRANS_OPAQUE, false);
+            add_thing_to_draw(screenover[gg].bmp, screenover[gg].x, screenover[gg].y, TRANS_OPAQUE, false, screenover[gg].blendMode);
         else if (screenover[gg].type != OVER_TEXTMSG) {
             int tdxp, tdyp;
             get_overlay_position(gg, &tdxp, &tdyp);
-            add_thing_to_draw(screenover[gg].bmp, tdxp, tdyp, 0, screenover[gg].hasAlphaChannel);
+            add_thing_to_draw(screenover[gg].bmp, tdxp, tdyp, 0, screenover[gg].hasAlphaChannel, screenover[gg].blendMode);
         }
     }
 
@@ -2243,7 +2245,7 @@ void draw_screen_overlay() {
                 (guis[aa].PopupStyle != kGUIPopupNoAutoRemove))
                 continue;
 
-            add_thing_to_draw(guibgbmp[aa], guis[aa].X, guis[aa].Y, guis[aa].Transparency, guis[aa].HasAlphaChannel());
+            add_thing_to_draw(guibgbmp[aa], guis[aa].X, guis[aa].Y, guis[aa].Transparency, guis[aa].HasAlphaChannel(), guis[aa].BlendMode);
 
             // only poll if the interface is enabled (mouseovers should not
             // work while in Wait state)
@@ -2292,6 +2294,8 @@ void put_sprite_list_on_screen()
             {
                 thisThing->bmp->SetTransparency(thisThing->transparent);
             }
+
+            thisThing->bmp->SetBlendMode(thisThing->blendMode);
 
             gfxDriver->DrawSprite(thisThing->x, thisThing->y, thisThing->bmp);
         }

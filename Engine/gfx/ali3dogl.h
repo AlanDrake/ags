@@ -124,6 +124,7 @@ public:
         _blue = blue;
         _tintSaturation = tintSaturation;
     }
+    virtual void SetBlendMode(int blendMode) { _blendMode = blendMode; }
 
     int _width, _height;
     int _colDepth;
@@ -138,6 +139,7 @@ public:
     OGLCUSTOMVERTEX* _vertex;
     TextureTile *_tiles;
     int _numTiles;
+    int _blendMode;
 
     OGLBitmap(int width, int height, int colDepth, bool opaque)
     {

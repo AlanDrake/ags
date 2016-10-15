@@ -86,6 +86,8 @@ void GUIMain::Init()
     OnClickHandler.Empty();
 
     ControlCount  = 0;
+
+    BlendMode = 0;
 }
 
 int GUIMain::FindControlUnderMouse(int leeway, bool must_be_clickable) const
@@ -472,6 +474,11 @@ void GUIMain::ReadFromFile(Stream *in, GuiVersion gui_version)
     ZOrder        = in->ReadInt32();
     Id            = in->ReadInt32();
     Padding       = in->ReadInt32();
+    BlendMode     = in->ReadInt32();
+    if (gui_version < kGuiVersion_341)
+    {
+        BlendMode = 0;
+    }
     in->Seek(sizeof(int32_t) * GUIMAIN_RESERVED_INTS);
     _visibility = (GUIVisibilityState)in->ReadInt32();
 
@@ -527,6 +534,9 @@ void GUIMain::WriteToFile(Stream *out, GuiVersion gui_version) const
     out->WriteInt32(ZOrder);
     out->WriteInt32(Id);
     out->WriteInt32(Padding);
+    // had to put it here, it was crashing everywhere else, nice to have some reserved space
+    //if (gui_version >= kGuiVersion_341)
+    out->WriteInt32(BlendMode); 
     int32_t reserved_ints[GUIMAIN_RESERVED_INTS] = {0};
     out->WriteArrayOfInt32(reserved_ints, GUIMAIN_RESERVED_INTS);
     out->WriteInt32(_visibility);

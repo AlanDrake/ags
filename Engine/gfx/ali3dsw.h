@@ -58,6 +58,7 @@ public:
     virtual int GetColorDepth() { return _colDepth; }
     virtual void SetLightLevel(int lightLevel)  { }
     virtual void SetTint(int red, int green, int blue, int tintSaturation) { }
+    virtual void SetBlendMode(int blendMode) { _blendMode = blendMode; }
 
     Bitmap *_bmp;
     int _width, _height;
@@ -67,6 +68,7 @@ public:
     bool _opaque;
     bool _hasAlpha;
     int _transparency;
+    int _blendMode;
 
     ALSoftwareBitmap(Bitmap *bmp, bool opaque, bool hasAlpha)
     {

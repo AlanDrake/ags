@@ -361,6 +361,23 @@ enum CharacterDirection {
 };
 #endif
 
+#ifdef SCRIPT_API_v341
+enum BlendMode {
+    //eBlendModeNoAlpha = 0,
+    eBlendModeDefault = 0,
+    eBlendModeAlpha,
+    eBlendModeAdd,
+    eBlendModeDarken,
+    eBlendModeLighten,
+    eBlendModeMultiply,
+    eBlendModeScreen,
+    eBlendModeBurn,
+    eBlendModeSubtract,
+    eBlendModeExclusion,
+    eBlendModeDodge
+};
+#endif
+
 internalstring autoptr builtin managed struct String {
   /// Creates a formatted string using the supplied parameters.
   import static String Format(const string format, ...);    // $AUTOCOMPLETESTATICONLY$
@@ -1162,6 +1179,10 @@ builtin managed struct Overlay {
   import attribute int X;
   /// Gets/sets the Y position on the screen where this overlay is displayed.
   import attribute int Y;
+#ifdef SCRIPT_API_v341
+  /// Gets/sets the blending mode of this overlay.
+  import attribute BlendMode BlendMode;
+#endif
 };
 
 builtin managed struct DynamicSprite {
@@ -1656,6 +1677,10 @@ builtin managed struct GUI {
   /// Performs default processing of a mouse click at the specified co-ordinates.
   import static void ProcessClick(int x, int y, MouseButton);
 #endif
+#ifdef SCRIPT_API_v341
+  /// Gets/sets the blending mode for this GUI.
+  import attribute BlendMode BlendMode;
+#endif
   
   int   reserved[2];   // $AUTOCOMPLETEIGNORE$
 };
@@ -2039,6 +2064,10 @@ builtin managed struct Object {
   /// Sets a text custom property for this object.
   import bool SetTextProperty(const string property, const string value);
 #endif
+#ifdef SCRIPT_API_v341
+  /// Gets/sets the blending mode for this object..
+  import attribute BlendMode  BlendMode;
+#endif
 
   int reserved[2];  // $AUTOCOMPLETEIGNORE$
 };
@@ -2228,6 +2257,10 @@ builtin managed struct Character {
   import attribute int  ThinkView;
   /// Gets/sets the character's current transparency level.
   import attribute int  Transparency;
+#ifdef SCRIPT_API_v341
+  /// Gets/sets the character's current blend mode.
+  import attribute BlendMode  BlendMode;
+#endif
   /// Gets/sets whether the character turns on the spot to face the correct direction before walking.
   import attribute bool TurnBeforeWalking;
   /// Gets the character's current view number.

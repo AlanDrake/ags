@@ -28,6 +28,7 @@ struct SpriteListEntry {
     int transparent;
     bool takesPriorityIfEqual;
     bool hasAlphaChannel;
+    int blendMode;
 };
 
 #endif // __AGS_EE_AC__SPRITELISTENTRY_H

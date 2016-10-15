@@ -42,6 +42,7 @@ struct CharacterExtras {
     char  process_idle_this_time;
     char  slow_move_counter;
     short animwait;
+    short blend_mode;
 
     void ReadFromFile(Common::Stream *in);
     void WriteToFile(Common::Stream *out);

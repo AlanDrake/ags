@@ -13,6 +13,7 @@
 //=============================================================================
 
 #include "screenoverlay.h"
+#include "ac/game_version.h"
 #include "util/stream.h"
 
 using AGS::Common::Stream;
@@ -32,6 +33,10 @@ void ScreenOverlay::ReadFromFile(Stream *in)
     associatedOverlayHandle = in->ReadInt32();
     hasAlphaChannel = in->ReadBool();
     positionRelativeToScreen = in->ReadBool();
+    if (loaded_game_file_version >= kGameVersion_341)
+      blendMode = in->ReadInt32();
+    else
+      blendMode = 0;
 }
 
 void ScreenOverlay::WriteToFile(Stream *out)
@@ -47,4 +52,6 @@ void ScreenOverlay::WriteToFile(Stream *out)
     out->WriteInt32(associatedOverlayHandle);
     out->WriteBool(hasAlphaChannel);
     out->WriteBool(positionRelativeToScreen);
+    if (loaded_game_file_version >= kGameVersion_341)
+      out->WriteInt32(blendMode);
 }
