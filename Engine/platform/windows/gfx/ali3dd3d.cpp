@@ -1123,20 +1123,60 @@ void D3DGraphicsDriver::_renderSprite(SpriteDrawListEntry *drawListEntry, bool g
     direct3ddevice->SetTransform(D3DTS_WORLD, &matTransform);
     direct3ddevice->SetTexture(0, bmpToDraw->_tiles[ti].texture);
 
+    // TODO: get Common::BlendMode to compile when used here
     switch (bmpToDraw->_blendMode) {
       // blend mode is always NORMAL at this point
-      //case 0: AGS_D3DBLENDOP(D3DBLENDOP_ADD, D3DBLEND_SRCALPHA, D3DBLEND_INVSRCALPHA); break; // NORMAL
-      case 1: AGS_D3DBLENDOP(D3DBLENDOP_ADD, D3DBLEND_SRCALPHA, D3DBLEND_ONE); break; // ADD (transparency = strength)
-      case 2: AGS_D3DBLENDOP(D3DBLENDOP_MIN, D3DBLEND_ONE, D3DBLEND_ONE); break; // DARKEN
-      case 3: AGS_D3DBLENDOP(D3DBLENDOP_MAX, D3DBLEND_ONE, D3DBLEND_ONE); break; // LIGHTEN
-      case 4: AGS_D3DBLENDOP(D3DBLENDOP_ADD, D3DBLEND_ZERO, D3DBLEND_SRCCOLOR); break; // MULTIPLY
-      case 5: AGS_D3DBLENDOP(D3DBLENDOP_ADD, D3DBLEND_ONE, D3DBLEND_INVSRCCOLOR); break; // SCREEN
-      case 6: AGS_D3DBLENDOP(D3DBLENDOP_SUBTRACT, D3DBLEND_DESTCOLOR, D3DBLEND_INVDESTCOLOR); break; // LINEAR BURN
-      case 7: AGS_D3DBLENDOP(D3DBLENDOP_REVSUBTRACT, D3DBLEND_SRCALPHA, D3DBLEND_ONE); break; // SUBTRACT (transparency = strength)
-      case 8: AGS_D3DBLENDOP(D3DBLENDOP_ADD, D3DBLEND_INVDESTCOLOR, D3DBLEND_INVSRCCOLOR); break; // EXCLUSION
-      // NOT PROPER (need pixel shaders)
-      case 9: AGS_D3DBLENDOP(D3DBLENDOP_ADD, D3DBLEND_DESTCOLOR, D3DBLEND_ONE); break; // fake color dodge (half strength of the real thing)
+      case 1: AGS_D3DBLENDOP(D3DBLENDOP_ADD, D3DBLEND_SRCALPHA, D3DBLEND_INVSRCALPHA); break; // ALPHA
+      case 2: AGS_D3DBLENDOP(D3DBLENDOP_ADD, D3DBLEND_SRCALPHA, D3DBLEND_ONE); break; // ADD (transparency = strength)
+      case 3: AGS_D3DBLENDOP(D3DBLENDOP_MIN, D3DBLEND_ONE, D3DBLEND_ONE); break; // DARKEN
+      case 4: AGS_D3DBLENDOP(D3DBLENDOP_MAX, D3DBLEND_ONE, D3DBLEND_ONE); break; // LIGHTEN
+      case 5: AGS_D3DBLENDOP(D3DBLENDOP_ADD, D3DBLEND_ZERO, D3DBLEND_SRCCOLOR); break; // MULTIPLY
+      case 6: AGS_D3DBLENDOP(D3DBLENDOP_ADD, D3DBLEND_ONE, D3DBLEND_INVSRCCOLOR); break; // SCREEN
+      case 8: AGS_D3DBLENDOP(D3DBLENDOP_REVSUBTRACT, D3DBLEND_SRCALPHA, D3DBLEND_ONE); break; // SUBTRACT (transparency = strength)
+      case 9: AGS_D3DBLENDOP(D3DBLENDOP_ADD, D3DBLEND_INVDESTCOLOR, D3DBLEND_INVSRCCOLOR); break; // EXCLUSION
+      // APPROXIMATIONS (need pixel shaders)
+      case 7: AGS_D3DBLENDOP(D3DBLENDOP_SUBTRACT, D3DBLEND_DESTCOLOR, D3DBLEND_INVDESTCOLOR); break; // LINEAR BURN (approximation)
+      case 10: AGS_D3DBLENDOP(D3DBLENDOP_ADD, D3DBLEND_DESTCOLOR, D3DBLEND_ONE); break; // fake color dodge (half strength of the real thing)
     }
+
+    // EXPLOITS - BEGIN
+
+    // exploit: allow transparency with blending modes
+    // darken/lighten the base sprite so a higher transparency value makes it trasparent
+    if (bmpToDraw->_blendMode>0) {
+      const int alpha = bmpToDraw->_transparency == 0 ? 255 : bmpToDraw->_transparency;
+      const int invalpha = 255-alpha;
+      switch (bmpToDraw->_blendMode) {
+        case 3:
+        case 5:
+        case 7: // burn is imperfect due to blend mode, darker than normal even when trasparent
+          // fade to white
+          direct3ddevice->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_ADDSMOOTH);
+          direct3ddevice->SetRenderState(D3DRS_TEXTUREFACTOR, D3DCOLOR_RGBA(invalpha, invalpha, invalpha, invalpha));
+          break;
+        case 4:
+        case 6:
+        case 9:
+        case 10: 
+          // fade to black
+          direct3ddevice->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_MODULATE);
+          direct3ddevice->SetRenderState(D3DRS_TEXTUREFACTOR, D3DCOLOR_RGBA(alpha, alpha, alpha, alpha));
+          break;
+      }
+      direct3ddevice->SetTextureStageState(0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+      direct3ddevice->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_TFACTOR);
+    }
+
+    // exploit: since the dodge is only half strength we can get a closer approx by drawing it twice
+    if (bmpToDraw->_blendMode == 10)
+    {
+      hr = direct3ddevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, ti * 4, 2);
+      if (hr != D3D_OK) 
+      {
+        throw Ali3DException("IDirect3DDevice9::DrawPrimitive failed");
+      }
+    }
+    // EXPLOITS - END
 
     hr = direct3ddevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, ti * 4, 2);
     if (hr != D3D_OK) 

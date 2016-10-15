@@ -347,19 +347,9 @@ void ALSoftwareGraphicsDriver::RenderToBackBuffer()
     { }
     else if (bitmap->_blendMode > 0 && bitmap->GetColorDepth() >= 32 && virtualScreen->GetColorDepth() >= 32)
     {
-      AGS::Common::BlendMode al_blender_mode;
-      switch (bitmap->_blendMode) {
-        case 1: al_blender_mode = AGS::Common::kBlendMode_Add; break; // ADD
-        case 2: al_blender_mode = AGS::Common::kBlendMode_Darken; break; // DARKEN
-        case 3: al_blender_mode = AGS::Common::kBlendMode_Lighten; break; // LIGHTEN
-        case 4: al_blender_mode = AGS::Common::kBlendMode_Multiply; break; // MULTIPLY
-        case 5: al_blender_mode = AGS::Common::kBlendMode_Screen; break; // SCREEN
-        case 6: al_blender_mode = AGS::Common::kBlendMode_Burn; break; // LINEAR BURN
-        case 7: al_blender_mode = AGS::Common::kBlendMode_Subtract; break; // SUBTRACT
-        case 8: al_blender_mode = AGS::Common::kBlendMode_Exclusion; break; // EXCLUSION
-        case 9: al_blender_mode = AGS::Common::kBlendMode_Dodge; break; // DODGE
-        default: al_blender_mode = AGS::Common::kBlendMode_Alpha; break; //
-      }
+      Common::BlendMode al_blender_mode = (Common::BlendMode) bitmap->_blendMode;
+      if (al_blender_mode >= Common::kNumBlendModes) al_blender_mode = Common::kBlendMode_Alpha;
+
       GfxUtil::DrawSpriteBlend(virtualScreen, Point(drawAtX, drawAtY), bitmap->_bmp, al_blender_mode, false, true, bitmap->_transparency ? bitmap->_transparency : 255);
     }
     else if (bitmap->_opaque)
