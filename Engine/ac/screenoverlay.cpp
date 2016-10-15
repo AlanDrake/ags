@@ -53,5 +53,5 @@ void ScreenOverlay::WriteToFile(Stream *out)
     out->WriteBool(hasAlphaChannel);
     out->WriteBool(positionRelativeToScreen);
     if (loaded_game_file_version >= kGameVersion_341)
-      out->WriteBool(blendMode);
+      out->WriteInt32(blendMode);
 }
