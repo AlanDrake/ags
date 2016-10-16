@@ -20,6 +20,7 @@
 #include "gfx/ali3dsw.h"
 #include "gfx/gfxfilter_allegro.h"
 #include "gfx/gfxfilter_hqx.h"
+#include "gfx/gfxfilter_adexfilter.h"
 #include "gfx/gfx_util.h"
 #include "gfx/gfx_def.h"
 #include "main/main_allegro.h"
@@ -664,7 +665,7 @@ ALSWGraphicsFactory::~ALSWGraphicsFactory()
 
 size_t ALSWGraphicsFactory::GetFilterCount() const
 {
-    return 2;
+    return 5;
 }
 
 const GfxFilterInfo *ALSWGraphicsFactory::GetFilterInfo(size_t index) const
@@ -675,6 +676,12 @@ const GfxFilterInfo *ALSWGraphicsFactory::GetFilterInfo(size_t index) const
         return &AllegroGfxFilter::FilterInfo;
     case 1:
         return &HqxGfxFilter::FilterInfo;
+    case 2:
+        return &AdexScanline2xGFXFilter::FilterInfo;
+    case 3:
+        return &AdexPCCRT4xGFXFilter::FilterInfo;
+    case 4:
+        return &AdexTVCRT4xGFXFilter::FilterInfo;
     default:
         return NULL;
     }
@@ -705,6 +712,12 @@ AllegroGfxFilter *ALSWGraphicsFactory::CreateFilter(const String &id)
         return new AllegroGfxFilter();
     else if (HqxGfxFilter::FilterInfo.Id.CompareNoCase(id) == 0)
         return new HqxGfxFilter();
+    else if (AdexScanline2xGFXFilter::FilterInfo.Id.CompareNoCase(id) == 0)
+        return new AdexScanline2xGFXFilter();
+    else if (AdexPCCRT4xGFXFilter::FilterInfo.Id.CompareNoCase(id) == 0)
+        return new AdexPCCRT4xGFXFilter();
+    else if (AdexTVCRT4xGFXFilter::FilterInfo.Id.CompareNoCase(id) == 0)
+        return new AdexTVCRT4xGFXFilter();
     return NULL;
 }
 

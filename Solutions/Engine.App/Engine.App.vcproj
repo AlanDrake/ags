@@ -820,6 +820,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\Engine\gfx\gfxfilter_adexfilter.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Engine\gfx\gfxfilter_allegro.cpp"
 					>
 				</File>
@@ -1758,6 +1762,10 @@
 				Name="gfx"
 				>
 				<File
+					RelativePath="..\..\Engine\gfx\adexfilters.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Engine\platform\windows\gfx\ali3dd3d.h"
 					>
 				</File>
@@ -1807,6 +1815,10 @@
 				</File>
 				<File
 					RelativePath="..\..\Engine\gfx\gfxfilter_aad3d.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Engine\gfx\gfxfilter_adexfilter.h"
 					>
 				</File>
 				<File
@@ -2593,6 +2605,14 @@
 				>
 				<File
 					RelativePath="..\..\Engine\libsrc\libcda-0.5\windows.c"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="adexfilters"
+				>
+				<File
+					RelativePath="..\..\Engine\libsrc\adexfilters\adexfilters.cpp"
 					>
 				</File>
 			</Filter>
