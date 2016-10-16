@@ -1214,8 +1214,10 @@ void D3DGraphicsDriver::_render(GlobalFlipType flip, bool clearDrawListAfterward
 {
   IDirect3DSurface9 *pBackBuffer = NULL;
   IDirect3DSurface9 *pRenderTarget = NULL;
+  D3DVIEWPORT9 pViewport;
 
   if (!_scaleNativeResolution) {
+    direct3ddevice->GetViewport(&pViewport);
     if (direct3ddevice->CreateRenderTarget( 
               _srcRect.GetWidth(),
               _srcRect.GetHeight(),
@@ -1238,7 +1240,6 @@ void D3DGraphicsDriver::_render(GlobalFlipType flip, bool clearDrawListAfterward
       throw Ali3DException("IDirect3DSurface9::SetRenderTarget failed");
     }
   }
-
 
   SpriteDrawListEntry *listToDraw = drawList;
   int listSize = numToDraw;
@@ -1296,6 +1297,8 @@ void D3DGraphicsDriver::_render(GlobalFlipType flip, bool clearDrawListAfterward
 
   direct3ddevice->EndScene();
 
+
+
   if (!_scaleNativeResolution) {
     if (direct3ddevice->SetRenderTarget(0, pBackBuffer)!= D3D_OK)
     {
@@ -1314,6 +1317,7 @@ void D3DGraphicsDriver::_render(GlobalFlipType flip, bool clearDrawListAfterward
     {
       throw Ali3DException("IDirect3DSurface9::StretchRect failed");
     }
+    direct3ddevice->SetViewport(&pViewport);
   }
     
   hr = direct3ddevice->Present(NULL, NULL, NULL, NULL);
