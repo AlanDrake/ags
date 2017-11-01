@@ -76,6 +76,7 @@ public:
         _blue = blue;
         _tintSaturation = tintSaturation;
     }
+    virtual void SetBlendMode(int blendMode) { _blendMode = blendMode; }
 
     int _width, _height;
     int _colDepth;
@@ -90,6 +91,7 @@ public:
     IDirect3DVertexBuffer9* _vertex;
     TextureTile *_tiles;
     int _numTiles;
+    int _blendMode;
 
     D3DBitmap(int width, int height, int colDepth, bool opaque)
     {
@@ -107,6 +109,7 @@ public:
         _vertex = NULL;
         _tiles = NULL;
         _numTiles = 0;
+        _blendMode = 0;
     }
 
     int GetWidthToRender() { return (_stretchToWidth > 0) ? _stretchToWidth : _width; }
@@ -192,6 +195,7 @@ public:
     virtual bool PlayVideo(const char *filename, bool useSound, VideoSkipType skipType, bool stretchToFullScreen);
     virtual bool SupportsGammaControl();
     virtual void SetGamma(int newGamma);
+    virtual void SetSoftGamma(int newGamma);
     virtual void UseSmoothScaling(bool enabled) { _smoothScaling = enabled; }
     virtual bool RequiresFullRedrawEachFrame() { return true; }
     virtual bool HasAcceleratedStretchAndFlip() { return true; }
@@ -243,6 +247,9 @@ private:
     // Called when the direct3d device is created for the first time
     int  FirstTimeInit();
     void initD3DDLL(const DisplayMode &mode);
+    Bitmap* _softGammaLayer;
+    D3DBitmap* _softGammaLayerDDB;
+    D3DDrawListEntry _softGammaSprite;
     void InitializeD3DState();
     void SetupViewport();
     HRESULT ResetD3DDevice();
@@ -260,6 +267,7 @@ private:
     void _render(GlobalFlipType flip, bool clearDrawListAfterwards);
     void _reDrawLastFrame();
     void _renderSprite(D3DDrawListEntry *entry, bool globalLeftRightFlip, bool globalTopBottomFlip);
+    void create_soft_gamma_bitmap();
 };
 
 

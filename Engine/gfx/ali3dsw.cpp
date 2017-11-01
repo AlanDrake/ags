@@ -20,7 +20,9 @@
 #include "gfx/ali3dsw.h"
 #include "gfx/gfxfilter_allegro.h"
 #include "gfx/gfxfilter_hqx.h"
+#include "gfx/gfxfilter_adexfilter.h"
 #include "gfx/gfx_util.h"
+#include "gfx/gfx_def.h"
 #include "main/main_allegro.h"
 #include "platform/base/agsplatformdriver.h"
 
@@ -313,6 +315,7 @@ void ALSoftwareGraphicsDriver::UnInit()
 bool ALSoftwareGraphicsDriver::SupportsGammaControl() 
 {
 #ifdef _WIN32
+  return 0; // [AVD] for some reason on my modern rig dxGammaControl is lying, need to investigate
 
   if (dxGammaControl != NULL) 
   {
@@ -338,6 +341,12 @@ void ALSoftwareGraphicsDriver::SetGamma(int newGamma)
 
   dxGammaControl->SetGammaRamp(0, &gammaRamp);
 #endif
+}
+
+int _gamma = 0; // internal use for soft gamma, could be replaced by a global bool and get the value from play.gamma_adjustement
+void ALSoftwareGraphicsDriver::SetSoftGamma(int newGamma)
+{
+    _gamma = (newGamma-100)*255/100;
 }
 
 Bitmap *ALSoftwareGraphicsDriver::ConvertBitmapToSupportedColourDepth(Bitmap *bitmap)
@@ -393,6 +402,13 @@ void ALSoftwareGraphicsDriver::RenderToBackBuffer()
 
     if ((bitmap->_opaque) && (bitmap->_bmp == virtualScreen))
     { }
+    else if (bitmap->_blendMode > 0 && bitmap->GetColorDepth() >= 32 && virtualScreen->GetColorDepth() >= 32)
+    {
+      Common::BlendMode al_blender_mode = (Common::BlendMode) bitmap->_blendMode;
+      if (al_blender_mode >= Common::kNumBlendModes) al_blender_mode = Common::kBlendMode_Alpha;
+
+      GfxUtil::DrawSpriteBlend(virtualScreen, Point(drawAtX, drawAtY), bitmap->_bmp, al_blender_mode, false, true, bitmap->_transparency ? bitmap->_transparency : 255);
+    }
     else if (bitmap->_opaque)
     {
       virtualScreen->Blit(bitmap->_bmp, 0, 0, drawAtX, drawAtY, bitmap->_bmp->GetWidth(), bitmap->_bmp->GetHeight());
@@ -438,6 +454,13 @@ void ALSoftwareGraphicsDriver::RenderToBackBuffer()
     }
     tint_image(virtualScreen, _spareTintingScreen, _tint_red, _tint_green, _tint_blue, 100, 255);
     Blit(_spareTintingScreen, virtualScreen, 0, 0, 0, 0, _spareTintingScreen->GetWidth(), _spareTintingScreen->GetHeight());*/
+  }
+
+  if (_gamma>0 && (_mode.ColorDepth > 8))
+  {
+    set_add_blender(_gamma, _gamma, _gamma, _gamma);
+    virtualScreen->TransBlendBlt(virtualScreen, 0, 0);
+    // Note: like screen tint, the screen will need to be invalidated
   }
 
   ClearDrawList();
@@ -692,7 +715,7 @@ ALSWGraphicsFactory::~ALSWGraphicsFactory()
 
 size_t ALSWGraphicsFactory::GetFilterCount() const
 {
-    return 2;
+    return 5;
 }
 
 const GfxFilterInfo *ALSWGraphicsFactory::GetFilterInfo(size_t index) const
@@ -703,6 +726,12 @@ const GfxFilterInfo *ALSWGraphicsFactory::GetFilterInfo(size_t index) const
         return &AllegroGfxFilter::FilterInfo;
     case 1:
         return &HqxGfxFilter::FilterInfo;
+    case 2:
+        return &AdexScanline2xGFXFilter::FilterInfo;
+    case 3:
+        return &AdexPCCRT4xGFXFilter::FilterInfo;
+    case 4:
+        return &AdexTVCRT4xGFXFilter::FilterInfo;
     default:
         return NULL;
     }
@@ -733,6 +762,12 @@ AllegroGfxFilter *ALSWGraphicsFactory::CreateFilter(const String &id)
         return new AllegroGfxFilter();
     else if (HqxGfxFilter::FilterInfo.Id.CompareNoCase(id) == 0)
         return new HqxGfxFilter();
+    else if (AdexScanline2xGFXFilter::FilterInfo.Id.CompareNoCase(id) == 0)
+        return new AdexScanline2xGFXFilter();
+    else if (AdexPCCRT4xGFXFilter::FilterInfo.Id.CompareNoCase(id) == 0)
+        return new AdexPCCRT4xGFXFilter();
+    else if (AdexTVCRT4xGFXFilter::FilterInfo.Id.CompareNoCase(id) == 0)
+        return new AdexTVCRT4xGFXFilter();
     return NULL;
 }
 

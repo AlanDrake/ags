@@ -35,6 +35,10 @@ using namespace AGS::Common;
 extern int dxmedia_play_video_3d(const char*filename, IDirect3DDevice9 *device, bool useAVISound, int canskip, int stretch);
 extern void dxmedia_shutdown_3d();
 
+#define AGS_D3DBLENDOP(blend_op, src_blend, dest_blend) \
+  direct3ddevice->SetRenderState(D3DRS_BLENDOP, blend_op); \
+  direct3ddevice->SetRenderState(D3DRS_SRCBLEND, src_blend); \
+  direct3ddevice->SetRenderState(D3DRS_DESTBLEND, dest_blend); \
 
 namespace AGS
 {
@@ -205,6 +209,11 @@ D3DGraphicsDriver::D3DGraphicsDriver(IDirect3D9 *d3d)
   _pixelRenderYOffset = 0;
   _renderSprAtScreenRes = false;
   flipTypeLastTime = kFlip_None;
+  _softGammaLayer = NULL;
+  _softGammaLayerDDB = NULL;
+  _softGammaSprite.skip = true;
+  _softGammaSprite.x = 0;
+  _softGammaSprite.y = 0;
 }
 
 void D3DGraphicsDriver::set_up_default_vertices()
@@ -283,6 +292,15 @@ void D3DGraphicsDriver::ReleaseDisplayMode()
   }
   delete _screenTintLayer;
   _screenTintLayer = NULL;
+
+  if (_softGammaLayerDDB != NULL) 
+  {
+    this->DestroyDDB(_softGammaLayerDDB);
+    _softGammaLayerDDB = NULL;
+    _softGammaSprite.bitmap = NULL;
+  }
+  delete _softGammaLayer;
+  _softGammaLayer = NULL;
 
   DestroyStageScreen();
 
@@ -804,6 +822,7 @@ void D3DGraphicsDriver::SetGraphicsFilter(PD3DFilter filter)
   // Creating ddbs references filter properties at some point,
   // so we have to redo this part of initialization here.
   create_screen_tint_bitmap();
+  create_soft_gamma_bitmap();
 }
 
 void D3DGraphicsDriver::SetTintMethod(TintMethod method) 
@@ -836,6 +855,7 @@ bool D3DGraphicsDriver::SetDisplayMode(const DisplayMode &mode, volatile int *lo
   InitializeD3DState();
   CreateVirtualScreen();
   create_screen_tint_bitmap();
+  //create_soft_gamma_bitmap();
   return true;
 }
 
@@ -1257,12 +1277,69 @@ void D3DGraphicsDriver::_renderSprite(D3DDrawListEntry *drawListEntry, bool glob
     direct3ddevice->SetTransform(D3DTS_WORLD, &matTransform);
     direct3ddevice->SetTexture(0, bmpToDraw->_tiles[ti].texture);
 
+    // TODO: get Common::BlendMode to compile when used here
+    switch (bmpToDraw->_blendMode) {
+      // blend mode is always NORMAL at this point
+      case 1: AGS_D3DBLENDOP(D3DBLENDOP_ADD, D3DBLEND_SRCALPHA, D3DBLEND_INVSRCALPHA); break; // ALPHA
+      case 2: AGS_D3DBLENDOP(D3DBLENDOP_ADD, D3DBLEND_SRCALPHA, D3DBLEND_ONE); break; // ADD (transparency = strength)
+      case 3: AGS_D3DBLENDOP(D3DBLENDOP_MIN, D3DBLEND_ONE, D3DBLEND_ONE); break; // DARKEN
+      case 4: AGS_D3DBLENDOP(D3DBLENDOP_MAX, D3DBLEND_ONE, D3DBLEND_ONE); break; // LIGHTEN
+      case 5: AGS_D3DBLENDOP(D3DBLENDOP_ADD, D3DBLEND_ZERO, D3DBLEND_SRCCOLOR); break; // MULTIPLY
+      case 6: AGS_D3DBLENDOP(D3DBLENDOP_ADD, D3DBLEND_ONE, D3DBLEND_INVSRCCOLOR); break; // SCREEN
+      case 8: AGS_D3DBLENDOP(D3DBLENDOP_REVSUBTRACT, D3DBLEND_SRCALPHA, D3DBLEND_ONE); break; // SUBTRACT (transparency = strength)
+      case 9: AGS_D3DBLENDOP(D3DBLENDOP_ADD, D3DBLEND_INVDESTCOLOR, D3DBLEND_INVSRCCOLOR); break; // EXCLUSION
+      // APPROXIMATIONS (need pixel shaders)
+      case 7: AGS_D3DBLENDOP(D3DBLENDOP_SUBTRACT, D3DBLEND_DESTCOLOR, D3DBLEND_INVDESTCOLOR); break; // LINEAR BURN (approximation)
+      case 10: AGS_D3DBLENDOP(D3DBLENDOP_ADD, D3DBLEND_DESTCOLOR, D3DBLEND_ONE); break; // fake color dodge (half strength of the real thing)
+    }
+
+    // EXPLOITS - BEGIN
+
+    // exploit: allow transparency with blending modes
+    // darken/lighten the base sprite so a higher transparency value makes it trasparent
+    if (bmpToDraw->_blendMode>0) {
+      const int alpha = bmpToDraw->_transparency == 0 ? 255 : bmpToDraw->_transparency;
+      const int invalpha = 255-alpha;
+      switch (bmpToDraw->_blendMode) {
+        case 3:
+        case 5:
+        case 7: // burn is imperfect due to blend mode, darker than normal even when trasparent
+          // fade to white
+          direct3ddevice->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_ADDSMOOTH);
+          direct3ddevice->SetRenderState(D3DRS_TEXTUREFACTOR, D3DCOLOR_RGBA(invalpha, invalpha, invalpha, invalpha));
+          break;
+        case 4:
+        case 6:
+        case 9:
+        case 10: 
+          // fade to black
+          direct3ddevice->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_MODULATE);
+          direct3ddevice->SetRenderState(D3DRS_TEXTUREFACTOR, D3DCOLOR_RGBA(alpha, alpha, alpha, alpha));
+          break;
+      }
+      direct3ddevice->SetTextureStageState(0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+      direct3ddevice->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_TFACTOR);
+    }
+
+    // exploit: since the dodge is only half strength we can get a closer approx by drawing it twice
+    if (bmpToDraw->_blendMode == 10)
+    {
+      hr = direct3ddevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, ti * 4, 2);
+      if (hr != D3D_OK) 
+      {
+        throw Ali3DException("IDirect3DDevice9::DrawPrimitive failed");
+      }
+    }
+    // EXPLOITS - END
+
     hr = direct3ddevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, ti * 4, 2);
     if (hr != D3D_OK) 
     {
       throw Ali3DException("IDirect3DDevice9::DrawPrimitive failed");
     }
-
+    
+    // Restore default blending mode
+    AGS_D3DBLENDOP(D3DBLENDOP_ADD, D3DBLEND_SRCALPHA, D3DBLEND_INVSRCALPHA);
   }
 }
 
@@ -1325,6 +1402,19 @@ void D3DGraphicsDriver::_render(GlobalFlipType flip, bool clearDrawListAfterward
   if (!_screenTintSprite.skip)
   {
     this->_renderSprite(&_screenTintSprite, false, false);
+  }
+
+  if (!_softGammaSprite.skip)
+  {
+    direct3ddevice->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_DESTCOLOR);
+    direct3ddevice->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_ONE);
+    /* TODO Darken fake gamma layer ( gamma < 100 )
+    direct3ddevice->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_DESTCOLOR);
+    direct3ddevice->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_ZERO);
+    */
+    this->_renderSprite(&_softGammaSprite, false, false);
+    direct3ddevice->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
+    direct3ddevice->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
   }
 
   direct3ddevice->EndScene();
@@ -2020,6 +2110,33 @@ bool D3DGraphicsFactory::Init()
         return false;
     }
     return true;
+}
+
+
+int _gamma = 0; // internal use for soft gamma, could be replaced by a global bool and get the value from play.gamma_adjustement
+void D3DGraphicsDriver::create_soft_gamma_bitmap() 
+{
+  if (!IsModeSet() || !_filter)
+    return;
+  _softGammaLayer = BitmapHelper::CreateBitmap(16, 16, this->_mode.ColorDepth);
+  _softGammaLayer = ReplaceBitmapWithSupportedFormat(_softGammaLayer);
+  _softGammaLayerDDB = (D3DBitmap*)this->CreateDDBFromBitmap(_softGammaLayer, false, false);
+  _softGammaSprite.bitmap = _softGammaLayerDDB;
+}
+
+void D3DGraphicsDriver::SetSoftGamma(int newGamma)
+{
+  int gamma = ( (newGamma-100)*255/100 );
+  if ( gamma != _gamma) {
+    _gamma = gamma;
+
+    _softGammaLayer->Clear(makecol_depth(_softGammaLayer->GetColorDepth(), gamma, gamma, gamma));
+    this->UpdateDDBFromBitmap(_softGammaLayerDDB, _softGammaLayer, false);
+    _softGammaLayerDDB->SetStretch(_srcRect.GetWidth(), _srcRect.GetHeight());
+    //_softGammaLayerDDB->SetTransparency(128);
+    
+    _softGammaSprite.skip = gamma<0;
+  }
 }
 
 } // namespace D3D

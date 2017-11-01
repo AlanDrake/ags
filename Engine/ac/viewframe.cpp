@@ -119,7 +119,7 @@ void precache_view(int view)
 
 // the specified frame has just appeared, see if we need
 // to play a sound or whatever
-void CheckViewFrame (int view, int loop, int frame, int sound_volume) {
+void CheckViewFrame (int view, int loop, int frame, int sound_volume, int sound_panning) {
     ScriptAudioChannel *channel = NULL;
 
     if (views[view].loops[loop].frames[frame].sound >= 0) {
@@ -129,7 +129,10 @@ void CheckViewFrame (int view, int loop, int frame, int sound_volume) {
 
     if (sound_volume != SCR_NO_VALUE && channel != NULL)
         channels[channel->id]->set_volume_percent(channels[channel->id]->get_volume() * sound_volume / 100);
-    
+    if (sound_panning != SCR_NO_VALUE && channel != NULL) {
+        channels[channel->id]->set_panning(sound_panning);
+        channels[channel->id]->panningAsPercentage = (sound_panning/255)*200-100;
+    }
 }
 
 // draws a view frame, flipped if appropriate

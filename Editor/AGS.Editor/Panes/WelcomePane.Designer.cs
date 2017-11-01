@@ -44,6 +44,7 @@ namespace AGS.Editor
             this.lnkTipText = new System.Windows.Forms.LinkLabel();
             this.lnkNextTip = new System.Windows.Forms.LinkLabel();
             this.label6 = new System.Windows.Forms.Label();
+            this.label4 = new System.Windows.Forms.Label();
             this.panel1.SuspendLayout();
             this.panel2.SuspendLayout();
             this.pnlRight.SuspendLayout();
@@ -53,6 +54,7 @@ namespace AGS.Editor
             // panel1
             // 
             this.panel1.BackColor = System.Drawing.Color.RoyalBlue;
+            this.panel1.Controls.Add(this.label4);
             this.panel1.Controls.Add(this.label1);
             this.panel1.Dock = System.Windows.Forms.DockStyle.Top;
             this.panel1.ForeColor = System.Drawing.Color.White;
@@ -73,10 +75,11 @@ namespace AGS.Editor
             // 
             // panel2
             // 
-            this.panel2.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(201)))), ((int)(((byte)(231)))), ((int)(((byte)(252)))));
+            this.panel2.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(41)))), ((int)(((byte)(49)))), ((int)(((byte)(52)))));
             this.panel2.Controls.Add(this.label3);
             this.panel2.Controls.Add(this.lnkTutorial);
             this.panel2.Controls.Add(this.label2);
+            this.panel2.ForeColor = System.Drawing.SystemColors.ControlLightLight;
             this.panel2.Location = new System.Drawing.Point(11, 79);
             this.panel2.Name = "panel2";
             this.panel2.Size = new System.Drawing.Size(207, 154);
@@ -97,6 +100,7 @@ namespace AGS.Editor
             // 
             this.lnkTutorial.AutoSize = true;
             this.lnkTutorial.LinkArea = new System.Windows.Forms.LinkArea(57, 8);
+            this.lnkTutorial.LinkColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(128)))), ((int)(((byte)(0)))));
             this.lnkTutorial.Location = new System.Drawing.Point(12, 39);
             this.lnkTutorial.MaximumSize = new System.Drawing.Size(180, 0);
             this.lnkTutorial.Name = "lnkTutorial";
@@ -120,11 +124,12 @@ namespace AGS.Editor
             // 
             // pnlRight
             // 
-            this.pnlRight.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(201)))), ((int)(((byte)(231)))), ((int)(((byte)(252)))));
+            this.pnlRight.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(41)))), ((int)(((byte)(49)))), ((int)(((byte)(52)))));
             this.pnlRight.Controls.Add(this.lblUpgradingInfo3);
             this.pnlRight.Controls.Add(this.lblUpgradingInfo);
             this.pnlRight.Controls.Add(this.lnkUpgrading);
             this.pnlRight.Controls.Add(this.label5);
+            this.pnlRight.ForeColor = System.Drawing.SystemColors.ControlLightLight;
             this.pnlRight.Location = new System.Drawing.Point(236, 79);
             this.pnlRight.Margin = new System.Windows.Forms.Padding(3, 30, 3, 3);
             this.pnlRight.Name = "pnlRight";
@@ -165,6 +170,7 @@ namespace AGS.Editor
             this.lnkUpgrading.Text = resources.GetString("lnkUpgrading.Text");
             this.lnkUpgrading.UseCompatibleTextRendering = true;
             this.lnkUpgrading.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.lnkUpgrading_LinkClicked);
+            this.lnkUpgrading.LinkColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(128)))), ((int)(((byte)(0)))));
             // 
             // label5
             // 
@@ -178,10 +184,11 @@ namespace AGS.Editor
             // 
             // pnlTipOfTheDay
             // 
-            this.pnlTipOfTheDay.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(201)))), ((int)(((byte)(231)))), ((int)(((byte)(252)))));
+            this.pnlTipOfTheDay.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(41)))), ((int)(((byte)(49)))), ((int)(((byte)(52)))));
             this.pnlTipOfTheDay.Controls.Add(this.lnkTipText);
             this.pnlTipOfTheDay.Controls.Add(this.lnkNextTip);
             this.pnlTipOfTheDay.Controls.Add(this.label6);
+            this.pnlTipOfTheDay.ForeColor = System.Drawing.SystemColors.ControlLightLight;
             this.pnlTipOfTheDay.Location = new System.Drawing.Point(11, 248);
             this.pnlTipOfTheDay.Name = "pnlTipOfTheDay";
             this.pnlTipOfTheDay.Size = new System.Drawing.Size(207, 166);
@@ -191,6 +198,7 @@ namespace AGS.Editor
             // 
             this.lnkTipText.AutoSize = true;
             this.lnkTipText.LinkArea = new System.Windows.Forms.LinkArea(0, 16);
+            this.lnkTipText.LinkColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(128)))), ((int)(((byte)(0)))));
             this.lnkTipText.Location = new System.Drawing.Point(12, 33);
             this.lnkTipText.MaximumSize = new System.Drawing.Size(180, 0);
             this.lnkTipText.Name = "lnkTipText";
@@ -205,6 +213,7 @@ namespace AGS.Editor
             // 
             this.lnkNextTip.AutoSize = true;
             this.lnkNextTip.LinkArea = new System.Windows.Forms.LinkArea(0, 16);
+            this.lnkNextTip.LinkColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(128)))), ((int)(((byte)(0)))));
             this.lnkNextTip.Location = new System.Drawing.Point(12, 138);
             this.lnkNextTip.MaximumSize = new System.Drawing.Size(400, 0);
             this.lnkNextTip.Name = "lnkNextTip";
@@ -224,11 +233,22 @@ namespace AGS.Editor
             this.label6.TabIndex = 0;
             this.label6.Text = "Did you know?";
             // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Font = new System.Drawing.Font("Tahoma", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label4.ForeColor = System.Drawing.Color.Gold;
+            this.label4.Location = new System.Drawing.Point(409, 21);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(197, 29);
+            this.label4.TabIndex = 1;
+            this.label4.Text = "Draconian Edition";
+            // 
             // WelcomePane
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 14F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.BackColor = System.Drawing.Color.White;
+            this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(22)))), ((int)(((byte)(30)))), ((int)(((byte)(32)))));
             this.Controls.Add(this.pnlTipOfTheDay);
             this.Controls.Add(this.pnlRight);
             this.Controls.Add(this.panel2);
@@ -268,6 +288,7 @@ namespace AGS.Editor
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.LinkLabel lnkNextTip;
         private System.Windows.Forms.LinkLabel lnkTipText;
+        private System.Windows.Forms.Label label4;
 
     }
 }

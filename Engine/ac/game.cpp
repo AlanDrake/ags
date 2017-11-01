@@ -151,6 +151,7 @@ int in_new_room=0, new_room_was = 0;  // 1 in new room, 2 first time in new room
 int new_room_pos=0;
 int new_room_x = SCR_NO_VALUE, new_room_y = SCR_NO_VALUE;
 int new_room_loop = SCR_NO_VALUE;
+float direction_ratio = 1.0;
 
 //Bitmap *spriteset[MAX_SPRITES+1];
 //SpriteCache spriteset (MAX_SPRITES+1);
@@ -945,6 +946,11 @@ ScriptAudioClip *Game_GetAudioClip(int index)
     if (index < 0 || index >= game.audioClipCount)
         return NULL;
     return &game.audioClips[index];
+}
+
+void Game_SetDirectionRatio(float ratio)
+{
+    if (ratio > 0) direction_ratio = ratio;
 }
 
 //=============================================================================
@@ -2400,6 +2406,10 @@ RuntimeScriptValue Sc_Game_IsPluginLoaded(const RuntimeScriptValue *params, int3
     API_SCALL_BOOL_OBJ(pl_is_plugin_loaded, const char);
 }
 
+RuntimeScriptValue Sc_Game_SetDirectionRatio(const RuntimeScriptValue *params, int32_t param_count)
+{
+  API_SCALL_VOID_PFLOAT(Game_SetDirectionRatio);
+}
 
 void RegisterGameAPI()
 {
@@ -2449,8 +2459,9 @@ void RegisterGameAPI()
     ccAddExternalStaticFunction("Game::get_TranslationFilename",                Sc_Game_GetTranslationFilename);
     ccAddExternalStaticFunction("Game::get_ViewCount",                          Sc_Game_GetViewCount);
     ccAddExternalStaticFunction("Game::get_AudioClipCount",                     Sc_Game_GetAudioClipCount);
-    ccAddExternalStaticFunction("Game::geti_AudioClips",                         Sc_Game_GetAudioClip);
+    ccAddExternalStaticFunction("Game::geti_AudioClips",                        Sc_Game_GetAudioClip);
     ccAddExternalStaticFunction("Game::IsPluginLoaded",                         Sc_Game_IsPluginLoaded);
+    ccAddExternalStaticFunction("Game::SetDirectionRatio",                      Sc_Game_SetDirectionRatio);
 
     /* ----------------------- Registering unsafe exports for plugins -----------------------*/
 

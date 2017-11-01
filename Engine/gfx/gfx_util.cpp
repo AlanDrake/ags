@@ -14,6 +14,7 @@
 
 #include "gfx/gfx_util.h"
 #include "gfx/blender.h"
+#include "../windows/include/allegro/internal/aintern.h"
 
 // CHECKME: is this hack still relevant?
 #if defined(IOS_VERSION) || defined(ANDROID_VERSION)
@@ -29,6 +30,108 @@ using namespace Common;
 
 namespace GfxUtil
 {
+
+// [AVD]naive custom blenders
+#define BLEND(bpp, r, g, b)   _blender_trans##bpp(makecol##bpp(r, g, b), y, n)
+// some formulas from AGSBlend
+#define _BLENDOP_BURN(B,L) ((B + L < 255) ? 0:(B + L - 255)) // note: burn was called subtract
+#define _BLENDOP_LIGHTEN(B,L) ((L > B) ? L:B)
+#define _BLENDOP_DARKEN(B,L) ((L > B) ? B:L)
+#define _BLENDOP_EXCLUSION(B,L) (B + L - 2 * B * L / 255)
+#define _BLENDOP_SUBTRACT(B,L) (L - B < 0) ? 0:(L - B)
+// not very pretty but forces the original alpha of "x" to "blender_result"
+inline unsigned long _blender_mask_alpha24(unsigned long blender_result, unsigned long x, unsigned long y, unsigned long n)
+{
+  const unsigned long src_alpha = geta32(x);
+  const unsigned long alphainv = 255-src_alpha;
+  const unsigned long r = (getr24(blender_result)*src_alpha + alphainv*getr24(y))/255;
+  const unsigned long g = (getg24(blender_result)*src_alpha + alphainv*getg24(y))/255;
+  const unsigned long b = (getb24(blender_result)*src_alpha + alphainv*getb24(y))/255;
+  return r | g<<8 | b<<16;
+}
+// alegro's dodge blend was wrong, mine is not perfect either
+inline unsigned long _my_blender_dodge24(unsigned long x, unsigned long y, unsigned long n)
+{
+  const unsigned long h = (getr24(y)*n) / ( 256 - getr24(x) ); 
+  const unsigned long j = (getg24(y)*n) / ( 256 - getg24(x) );
+  const unsigned long k = (getb24(y)*n) / ( 256 - getb24(x) );
+  return BLEND(24, h>255?255:h, j>255?255:j, k>255?255:k);
+}
+inline unsigned long _my_blender_burn24(unsigned long x, unsigned long y, unsigned long n)
+{
+  const unsigned long h = _BLENDOP_BURN(getr24(x), getr24(y)); 
+  const unsigned long j = _BLENDOP_BURN(getg24(x), getg24(y)); 
+  const unsigned long k = _BLENDOP_BURN(getb24(x), getb24(y)); 
+  return BLEND(24, h, j, k);
+}
+inline unsigned long _my_blender_lighten24(unsigned long x, unsigned long y, unsigned long n)
+{
+  const unsigned long h = _BLENDOP_LIGHTEN(getr24(x), getr24(y)); 
+  const unsigned long j = _BLENDOP_LIGHTEN(getg24(x), getg24(y)); 
+  const unsigned long k = _BLENDOP_LIGHTEN(getb24(x), getb24(y)); 
+  return BLEND(24, h, j, k);
+}
+inline unsigned long _my_blender_darken24(unsigned long x, unsigned long y, unsigned long n)
+{
+  const unsigned long h = _BLENDOP_DARKEN(getr24(x), getr24(y)); 
+  const unsigned long j = _BLENDOP_DARKEN(getg24(x), getg24(y)); 
+  const unsigned long k = _BLENDOP_DARKEN(getb24(x), getb24(y)); 
+  return BLEND(24, h, j, k);
+}
+inline unsigned long _my_blender_exclusion24(unsigned long x, unsigned long y, unsigned long n)
+{
+  const unsigned long h = _BLENDOP_EXCLUSION(getr24(x), getr24(y)); 
+  const unsigned long j = _BLENDOP_EXCLUSION(getg24(x), getg24(y)); 
+  const unsigned long k = _BLENDOP_EXCLUSION(getb24(x), getb24(y)); 
+  return BLEND(24, h, j, k);
+}
+inline unsigned long _my_blender_subtract24(unsigned long x, unsigned long y, unsigned long n)
+{
+  const unsigned long h = _BLENDOP_SUBTRACT(getr24(x), getr24(y)); 
+  const unsigned long j = _BLENDOP_SUBTRACT(getg24(x), getg24(y)); 
+  const unsigned long k = _BLENDOP_SUBTRACT(getb24(x), getb24(y)); 
+  return BLEND(24, h, j, k);
+}
+
+inline unsigned long _blender_masked_add32(unsigned long x, unsigned long y, unsigned long n)
+{
+  return _blender_mask_alpha24(_blender_add24(x, y, n ), x, y, n);
+}
+inline unsigned long _blender_masked_dodge32(unsigned long x, unsigned long y, unsigned long n)
+{
+  return _blender_mask_alpha24(_my_blender_dodge24(x, y, n ), x, y, n);
+}
+inline unsigned long _blender_masked_burn32(unsigned long x, unsigned long y, unsigned long n)
+{
+  return _blender_mask_alpha24(_my_blender_burn24(x, y, n ), x, y, n);
+}
+inline unsigned long _blender_masked_lighten32(unsigned long x, unsigned long y, unsigned long n)
+{
+  return _blender_mask_alpha24(_my_blender_lighten24(x, y, n ), x, y, n);
+}
+inline unsigned long _blender_masked_darken32(unsigned long x, unsigned long y, unsigned long n)
+{
+  return _blender_mask_alpha24(_my_blender_darken24(x, y, n ), x, y, n);
+}
+inline unsigned long _blender_masked_exclusion32(unsigned long x, unsigned long y, unsigned long n)
+{
+  return _blender_mask_alpha24(_my_blender_exclusion24(x, y, n ), x, y, n);
+}
+inline unsigned long _blender_masked_subtract32(unsigned long x, unsigned long y, unsigned long n)
+{
+  return _blender_mask_alpha24(_my_blender_subtract24(x, y, n ), x, y, n);
+}
+inline unsigned long _blender_masked_screen32(unsigned long x, unsigned long y, unsigned long n)
+{
+  return _blender_mask_alpha24(_blender_screen24(x, y, n ), x, y, n);
+}
+inline unsigned long _blender_masked_multiply32(unsigned long x, unsigned long y, unsigned long n)
+{
+  return _blender_mask_alpha24(_blender_multiply24(x, y, n ), x, y, n);
+}
+// --
+
+
 
 typedef BLENDER_FUNC PfnBlenderCb;
 
@@ -49,6 +152,15 @@ static const BlendModeSetter BlendModeSets[kNumBlendModes] =
 {
     { NULL, NULL, NULL, NULL, NULL }, // kBlendMode_NoAlpha
     { _argb2argb_blender, _argb2rgb_blender, _rgb2argb_blender, _opaque_alpha_blender, NULL }, // kBlendMode_Alpha
+    { NULL, _blender_masked_add32, _blender_add24, _blender_add24, NULL }, // kBlendMode_Add
+    { NULL, _blender_masked_darken32, _my_blender_darken24, _my_blender_darken24, NULL }, // kBlendMode_Darken
+    { NULL, _blender_masked_lighten32, _my_blender_lighten24, _my_blender_lighten24, NULL }, // kBlendMode_Lighten
+    { NULL, _blender_masked_multiply32, _blender_multiply24, _blender_multiply24, NULL }, // kBlendMode_Multiply
+    { NULL, _blender_masked_screen32, _blender_screen24, _blender_screen24, NULL }, // kBlendMode_Screen
+    { NULL, _blender_masked_burn32, _my_blender_burn24, _my_blender_burn24, NULL }, // kBlendMode_Burn
+    { NULL, _blender_masked_subtract32, _my_blender_subtract24, NULL }, // kBlendMode_Subtract
+    { NULL, _blender_masked_exclusion32, _my_blender_exclusion24, _my_blender_exclusion24, NULL }, // kBlendMode_Exclusion
+    { NULL, _blender_masked_dodge32, _my_blender_dodge24, _my_blender_dodge24, NULL }, // kBlendMode_Dodge
     // NOTE: add new modes here
 };
 

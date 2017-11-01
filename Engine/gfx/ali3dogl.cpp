@@ -351,6 +351,10 @@ void OGLGraphicsDriver::SetGamma(int newGamma)
 {
 }
 
+void OGLGraphicsDriver::SetSoftGamma(int newGamma)
+{
+}
+
 void OGLGraphicsDriver::SetGraphicsFilter(POGLFilter filter)
 {
   _filter = filter;

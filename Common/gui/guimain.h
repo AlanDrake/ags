@@ -31,7 +31,7 @@ struct GameSetupStruct;
 
 #define LEGACY_MAX_OBJS_ON_GUI      30
 
-#define GUIMAIN_RESERVED_INTS       5
+#define GUIMAIN_RESERVED_INTS       4
 #define GUIMAIN_LEGACY_NAME_LENGTH         16
 #define GUIMAIN_LEGACY_EVENTHANDLER_LENGTH 20
 #define GUIMAIN_LEGACY_TW_FLAGS_SIZE 4
@@ -136,6 +136,8 @@ public:
 
     // TODO: remove these later
     int32_t ControlCount;   // number of objects on gui
+    
+    int32_t BlendMode;
 
 private:
     GUIVisibilityState _visibility;

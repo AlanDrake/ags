@@ -524,6 +524,22 @@ int get_volume_adjusted_for_distance(int volume, int sndX, int sndY, int sndMaxD
     return wantvol;
 }
 
+int get_panning_adjusted_for_distance(int sndX)
+{
+    int distx = (sndX-playerchar->x);
+   
+    // get the relative panning
+    int panning = 128 + (distx * 128) / play.viewport.GetWidth();
+
+    if (panning < 0)
+        panning = 0;
+    if (panning > 255)
+        panning = 255;
+
+    return panning;
+}
+
+
 void update_directional_sound_vol()
 {
     for (int chan = 1; chan < MAX_SOUND_CHANNELS; chan++) 
@@ -537,6 +553,7 @@ void update_directional_sound_vol()
                 channels[chan]->ySource,
                 channels[chan]->maximumPossibleDistanceAway) -
                 channels[chan]->vol);
+            channels[chan]->set_panning(get_panning_adjusted_for_distance(channels[chan]->xSource));
         }
     }
 }
@@ -569,18 +586,21 @@ void update_ambient_sound_vol () {
         int ambientvol = (sourceVolume * play.sound_volume) / 255;
 
         int wantvol;
+        int wantpanning = -1;
 
         if ((thisSound->x == 0) && (thisSound->y == 0)) {
             wantvol = ambientvol;
         }
         else {
             wantvol = get_volume_adjusted_for_distance(ambientvol, thisSound->x, thisSound->y, thisSound->maxdist);
+            wantpanning = get_panning_adjusted_for_distance(thisSound->x);
         }
 
         if (channels[thisSound->channel] == NULL)
             quit("Internal error: the ambient sound channel is enabled, but it has been destroyed");
 
         channels[thisSound->channel]->set_volume(wantvol);
+        if (wantpanning > -1) channels[thisSound->channel]->set_panning(wantpanning);
     }
 }
 

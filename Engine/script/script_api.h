@@ -174,6 +174,11 @@ inline const char *ScriptVSprintf(char *buffer, size_t buf_length, const char *f
     FUNCTION(params[0].IValue, params[1].IValue, params[2].IValue, params[3].IValue, (P1CLASS*)params[4].Ptr); \
     return RuntimeScriptValue()
 
+#define API_SCALL_VOID_PFLOAT(FUNCTION) \
+    ASSERT_PARAM_COUNT(FUNCTION, 1) \
+    FUNCTION(params[0].FValue); \
+    return RuntimeScriptValue()
+
 #define API_SCALL_VOID_PFLOAT2(FUNCTION) \
     ASSERT_PARAM_COUNT(FUNCTION, 2) \
     FUNCTION(params[0].FValue, params[1].FValue); \
@@ -255,6 +260,10 @@ inline const char *ScriptVSprintf(char *buffer, size_t buf_length, const char *f
 #define API_SCALL_BOOL_OBJ(FUNCTION, P1CLASS) \
     ASSERT_PARAM_COUNT(FUNCTION, 1) \
     return RuntimeScriptValue().SetInt32AsBool(FUNCTION((P1CLASS*)params[0].Ptr))
+
+#define API_SCALL_BOOL_PINT(FUNCTION) \
+    ASSERT_PARAM_COUNT(FUNCTION, 1) \
+    return RuntimeScriptValue().SetInt32AsBool(FUNCTION(params[0].IValue))
 
 #define API_SCALL_BOOL_POBJ_PINT(FUNCTION, P1CLASS) \
     ASSERT_PARAM_COUNT(FUNCTION, 2) \

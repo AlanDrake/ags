@@ -85,6 +85,7 @@ public:
         _blue = blue;
         _tintSaturation = tintSaturation;
     }
+    virtual void SetBlendMode(int blendMode) { _blendMode = blendMode; }
 
     int _width, _height;
     int _colDepth;
@@ -99,6 +100,7 @@ public:
     OGLCUSTOMVERTEX* _vertex;
     TextureTile *_tiles;
     int _numTiles;
+    int _blendMode;
 
     OGLBitmap(int width, int height, int colDepth, bool opaque)
     {
@@ -195,6 +197,7 @@ public:
     virtual bool PlayVideo(const char *filename, bool useSound, VideoSkipType skipType, bool stretchToFullScreen);
     virtual bool SupportsGammaControl();
     virtual void SetGamma(int newGamma);
+    virtual void SetSoftGamma(int newGamma);
     virtual void UseSmoothScaling(bool enabled) { _smoothScaling = enabled; }
     virtual bool RequiresFullRedrawEachFrame() { return true; }
     virtual bool HasAcceleratedStretchAndFlip() { return true; }

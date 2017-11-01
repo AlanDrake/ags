@@ -87,6 +87,7 @@ extern int cur_mode;
 extern int screen_is_dirty;
 extern CCCharacter ccDynamicCharacter;
 extern CCInventory ccDynamicInv;
+extern float direction_ratio;
 
 //--------------------------------
 
@@ -319,6 +320,8 @@ DirectionalLoop GetDirectionalLoop(CharacterInfo *chinfo, int x_diff, int y_diff
 {
     DirectionalLoop next_loop = kDirLoop_Left; // NOTE: default loop was Left for some reason
 
+    x_diff /= direction_ratio;//1.345; // adjustment perspective
+
     const ViewStruct &chview  = views[chinfo->view];
     const bool has_down_loop  = ((chview.numLoops > kDirLoop_Down)  && (chview.loops[kDirLoop_Down].numFrames > 0));
     const bool has_up_loop    = ((chview.numLoops > kDirLoop_Up)    && (chview.loops[kDirLoop_Up].numFrames > 0));
@@ -327,11 +330,11 @@ DirectionalLoop GetDirectionalLoop(CharacterInfo *chinfo, int x_diff, int y_diff
 	const bool has_right_loop = true; // ((chview.numLoops > kDirLoop_Right) && (chview.loops[kDirLoop_Right].numFrames > 0));
     const bool has_diagonal_loops = useDiagonal(chinfo) == 0; // NOTE: useDiagonal returns 0 for "true"
 
-	const bool want_horizontal = (abs(y_diff) < abs(x_diff)) || (!has_down_loop || !has_up_loop);
+    const bool want_horizontal = (abs(y_diff) < abs(x_diff)) || (!has_down_loop || !has_up_loop);
 
     if (want_horizontal)
     {
-        const bool want_diagonal = has_diagonal_loops && (abs(y_diff) > abs(x_diff) / 2);
+        const bool want_diagonal = has_diagonal_loops && (abs(y_diff) > abs(x_diff));
         if (!has_left_loop && !has_right_loop)
         {
             next_loop = kDirLoop_Down;
@@ -1531,6 +1534,20 @@ void Character_SetTransparency(CharacterInfo *chaa, int trans) {
     chaa->transparency = GfxDef::Trans100ToLegacyTrans255(trans);
 }
 
+int Character_GetBlendMode(CharacterInfo *chaa) {
+
+    return charextra[chaa->index_id].blend_mode;
+}
+
+void Character_SetBlendMode(CharacterInfo *chaa, int blendMode) {
+/*
+    if ((blendMode < 0) || (blendMode > 4))
+        quit("!SetBlendMode: invalid blend mode");
+*/
+    charextra[chaa->index_id].blend_mode = blendMode;
+}
+
+
 int Character_GetTurnBeforeWalking(CharacterInfo *chaa) {
 
     if (chaa->flags & CHF_NOTURNING)
@@ -2090,9 +2107,21 @@ void animate_character(CharacterInfo *chap, int loopn,int sppd,int rept, int noi
     CheckViewFrameForCharacter(chap);
 }
 
+int GetPanningFromPosition(int x) {
+    int panning = ((x-offsetx)*255)/play.viewport.GetWidth();
+
+    if (panning < 0)
+        panning = 0;
+    if (panning > 255)
+        panning = 255;
+
+    return panning;
+}
+
 void CheckViewFrameForCharacter(CharacterInfo *chi) {
 
     int soundVolume = SCR_NO_VALUE;
+    int soundPanning = GetPanningFromPosition(chi->x);
 
     if (chi->flags & CHF_SCALEVOLUME) {
         // adjust the sound volume using the character's zoom level
@@ -2108,7 +2137,7 @@ void CheckViewFrameForCharacter(CharacterInfo *chi) {
             soundVolume = 100;
     }
 
-    CheckViewFrame(chi->view, chi->loop, chi->frame, soundVolume);
+    CheckViewFrame(chi->view, chi->loop, chi->frame, soundVolume, soundPanning);
 }
 
 Bitmap *GetCharacterImage(int charid, int *isFlipped) 
@@ -3661,6 +3690,18 @@ RuntimeScriptValue Sc_Character_SetZ(void *self, const RuntimeScriptValue *param
     API_OBJCALL_VOID_PINT(CharacterInfo, Character_SetZ);
 }
 
+// int (CharacterInfo *chaa)
+RuntimeScriptValue Sc_Character_GetBlendMode(void *self, const RuntimeScriptValue *params, int32_t param_count)
+{
+    API_OBJCALL_INT(CharacterInfo, Character_GetBlendMode);
+}
+
+// void (CharacterInfo *chaa, int blend_mode)
+RuntimeScriptValue Sc_Character_SetBlendMode(void *self, const RuntimeScriptValue *params, int32_t param_count)
+{
+    API_OBJCALL_VOID_PINT(CharacterInfo, Character_SetBlendMode);
+}
+
 //=============================================================================
 //
 // Exclusive API for Plugins
@@ -3822,6 +3863,8 @@ void RegisterCharacterAPI()
 	ccAddExternalObjectFunction("Character::set_Z",                     Sc_Character_SetZ);
 	ccAddExternalObjectFunction("Character::get_z",                     Sc_Character_GetZ);
 	ccAddExternalObjectFunction("Character::set_z",                     Sc_Character_SetZ);
+	ccAddExternalObjectFunction("Character::get_BlendMode",             Sc_Character_GetBlendMode);
+	ccAddExternalObjectFunction("Character::set_BlendMode",             Sc_Character_SetBlendMode);
 
     ccAddExternalObjectFunction("Character::get_HasExplicitLight",      Sc_Character_HasExplicitLight);
     ccAddExternalObjectFunction("Character::get_LightLevel",            Sc_Character_GetLightLevel);

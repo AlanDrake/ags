@@ -165,6 +165,8 @@ void System_SetGamma(int newValue) {
 
         if (gfxDriver->SupportsGammaControl())
             gfxDriver->SetGamma(newValue);
+        else 
+            gfxDriver->SetSoftGamma(newValue);
     }
 }
 

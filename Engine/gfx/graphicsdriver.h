@@ -116,6 +116,7 @@ public:
   virtual void UseSmoothScaling(bool enabled) = 0;
   virtual bool SupportsGammaControl() = 0;
   virtual void SetGamma(int newGamma) = 0;
+  virtual void SetSoftGamma(int newGamma) = 0;
   virtual Common::Bitmap* GetMemoryBackBuffer() = 0;
   virtual void SetMemoryBackBuffer(Common::Bitmap *backBuffer) = 0;
   virtual bool RequiresFullRedrawEachFrame() = 0;
