@@ -61,6 +61,7 @@ PFNGLGENERATEMIPMAPEXTPROC glGenerateMipmapEXT = 0;
 PFNGLFRAMEBUFFERTEXTURE2DEXTPROC glFramebufferTexture2DEXT = 0;
 PFNGLFRAMEBUFFERRENDERBUFFEREXTPROC glFramebufferRenderbufferEXT = 0;
 PFNWGLSWAPINTERVALEXTPROC glSwapIntervalEXT = 0;
+PFNGLBLENDEQUATIONPROC glBlendEquation = 0;
 // Shaders stuff
 PFNGLCREATESHADERPROC glCreateShader = 0;
 PFNGLSHADERSOURCEPROC glShaderSource = 0;
@@ -165,6 +166,10 @@ const char* fbo_extension_string = "GL_OES_framebuffer_object";
 #define GL_COLOR_ATTACHMENT0_EXT GL_COLOR_ATTACHMENT0_OES
 
 #endif
+
+#define AGS_OGLBLENDOP(blend_op, src_blend, dest_blend) \
+  glBlendEquation(blend_op); \
+  glBlendFunc(src_blend, dest_blend); \
 
 namespace AGS
 {
@@ -568,6 +573,7 @@ void OGLGraphicsDriver::TestRenderToTexture()
     glGenerateMipmapEXT = (PFNGLGENERATEMIPMAPEXTPROC)wglGetProcAddress("glGenerateMipmapEXT");
     glFramebufferTexture2DEXT = (PFNGLFRAMEBUFFERTEXTURE2DEXTPROC)wglGetProcAddress("glFramebufferTexture2DEXT");
     glFramebufferRenderbufferEXT = (PFNGLFRAMEBUFFERRENDERBUFFEREXTPROC)wglGetProcAddress("glFramebufferRenderbufferEXT");
+    glBlendEquation = (PFNGLBLENDEQUATIONEXTPROC)wglGetProcAddress("glBlendEquation");
   #endif
 
     _can_render_to_texture = true;
@@ -1254,7 +1260,67 @@ void OGLGraphicsDriver::_renderSprite(OGLDrawListEntry *drawListEntry, bool glob
       glVertexPointer(2, GL_FLOAT, sizeof(OGLCUSTOMVERTEX), &defaultVertices[0].position);
     }
 
+    // TRY TO PUT THE BLENDMODES HERE
+    switch (bmpToDraw->_blendMode) {
+        // blend mode is always NORMAL at this point
+    case 1: AGS_OGLBLENDOP(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); break; // ALPHA
+    case 2: AGS_OGLBLENDOP(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE); break; // ADD (transparency = strength)
+    case 3: AGS_OGLBLENDOP(GL_MIN, GL_ONE, GL_ONE); break; // DARKEN
+    case 4: AGS_OGLBLENDOP(GL_MAX, GL_ONE, GL_ONE); break; // LIGHTEN
+    case 5: AGS_OGLBLENDOP(GL_FUNC_ADD, GL_ZERO, GL_SRC_COLOR); break; // MULTIPLY
+    case 6: AGS_OGLBLENDOP(GL_FUNC_ADD, GL_ONE, GL_ONE_MINUS_SRC_COLOR); break; // SCREEN
+    case 8: AGS_OGLBLENDOP(GL_FUNC_REVERSE_SUBTRACT, GL_SRC_ALPHA, GL_ONE); break; // SUBTRACT (transparency = strength)
+    case 9: AGS_OGLBLENDOP(GL_FUNC_ADD, GL_ONE_MINUS_DST_COLOR, GL_ONE_MINUS_SRC_COLOR); break; // EXCLUSION
+                                                                                                // APPROXIMATIONS (need pixel shaders)
+    case 7: AGS_OGLBLENDOP(GL_FUNC_SUBTRACT, GL_DST_COLOR, GL_ONE_MINUS_DST_COLOR); break; // LINEAR BURN (approximation)
+    case 10: AGS_OGLBLENDOP(GL_FUNC_ADD, GL_DST_COLOR, GL_ONE); break; // fake color dodge (half strength of the real thing)
+    }
+
+    // EXPLOITS - BEGIN (should use shaders instead)
+
+    // exploit: allow transparency with blending modes
+    // darken/lighten the base sprite so a higher transparency value makes it trasparent
+    if (bmpToDraw->_blendMode>0) {
+        const float alpha = bmpToDraw->_transparency == 0 ? 1.0 : bmpToDraw->_transparency / 255.0;
+        const float invalpha = 1.0 - alpha;
+        switch (bmpToDraw->_blendMode) {
+        case 3:
+        case 5:
+        case 7: // burn is imperfect due to blend mode, darker than normal even when trasparent
+                // fade to white
+            glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_ADD);
+            glColor4f(invalpha, invalpha, invalpha, invalpha);
+            break;
+            /*
+        case 4:
+        case 6:
+        case 9:
+        case 10:
+            // fade to black
+            glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+            glColor4f(alpha, alpha, alpha, alpha);
+            break;
+            */
+        default: // apparently this is the default or something
+            glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+            glColor4f(alpha, alpha, alpha, alpha);
+            break;
+
+        }
+    }
+
+    // exploit: since the dodge is only half strength we can get a closer approx by drawing it twice
+    if (bmpToDraw->_blendMode == 10)
+    {
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    }
+    // EXPLOITS - END
+
+
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+    // Restore default blending mode
+    AGS_OGLBLENDOP(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   }
   glUseProgram(0);
 }
