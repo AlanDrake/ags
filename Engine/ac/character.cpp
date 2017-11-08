@@ -334,7 +334,7 @@ DirectionalLoop GetDirectionalLoop(CharacterInfo *chinfo, int x_diff, int y_diff
 
     if (want_horizontal)
     {
-        const bool want_diagonal = has_diagonal_loops && (abs(y_diff) > abs(x_diff));
+        const bool want_diagonal = has_diagonal_loops && (abs(y_diff) > abs(x_diff) / 2);
         if (!has_left_loop && !has_right_loop)
         {
             next_loop = kDirLoop_Down;
