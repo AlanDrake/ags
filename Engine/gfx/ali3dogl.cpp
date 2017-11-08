@@ -286,6 +286,11 @@ OGLGraphicsDriver::OGLGraphicsDriver()
   _do_render_to_texture = false;
   _super_sampling = 1;
   set_up_default_vertices();
+  _softGammaLayer = NULL;
+  _softGammaLayerDDB = NULL;
+  _softGammaSprite.skip = true;
+  _softGammaSprite.x = 0;
+  _softGammaSprite.y = 0;
 }
 
 
@@ -354,10 +359,34 @@ bool OGLGraphicsDriver::SupportsGammaControl()
 
 void OGLGraphicsDriver::SetGamma(int newGamma)
 {
+    SetSoftGamma(newGamma);
+}
+
+int _gamma = 0; // internal use for soft gamma, could be replaced by a global bool and get the value from play.gamma_adjustement
+void OGLGraphicsDriver::create_soft_gamma_bitmap()
+{
+    if (!IsModeSet() || !_filter)
+        return;
+
+    _softGammaLayer = BitmapHelper::CreateBitmap(16, 16, _mode.ColorDepth);
+    _softGammaLayer = ReplaceBitmapWithSupportedFormat(_softGammaLayer);
+    _softGammaLayerDDB = (OGLBitmap*)this->CreateDDBFromBitmap(_softGammaLayer, false, false);
+    _softGammaSprite.bitmap = _softGammaLayerDDB;
 }
 
 void OGLGraphicsDriver::SetSoftGamma(int newGamma)
 {
+    int gamma = ((newGamma - 100) * 255 / 100);
+    if (gamma != _gamma) {
+        _gamma = gamma;
+
+        _softGammaLayer->Clear(makecol_depth(_softGammaLayer->GetColorDepth(), gamma, gamma, gamma));
+        _softGammaLayer->Clear(makecol_depth(_softGammaLayer->GetColorDepth(), gamma, gamma, gamma));
+        this->UpdateDDBFromBitmap(_softGammaLayerDDB, _softGammaLayer, false);
+        _softGammaLayerDDB->SetStretch(_srcRect.GetWidth(), _srcRect.GetHeight());
+
+        _softGammaSprite.skip = gamma <= 0;
+    }
 }
 
 void OGLGraphicsDriver::SetGraphicsFilter(POGLFilter filter)
@@ -367,6 +396,7 @@ void OGLGraphicsDriver::SetGraphicsFilter(POGLFilter filter)
   // Creating ddbs references filter properties at some point,
   // so we have to redo this part of initialization here.
   create_screen_tint_bitmap();
+  create_soft_gamma_bitmap();
 }
 
 void OGLGraphicsDriver::SetTintMethod(TintMethod method) 
@@ -900,6 +930,7 @@ bool OGLGraphicsDriver::SetDisplayMode(const DisplayMode &mode, volatile int *lo
 #endif
 
   create_screen_tint_bitmap();
+  create_soft_gamma_bitmap();
   // If we already have a native size set, then update virtual screen and setup backbuffer texture immediately
   CreateVirtualScreen();
   SetupBackbufferTexture();
@@ -965,6 +996,15 @@ void OGLGraphicsDriver::ReleaseDisplayMode()
   }
   delete _screenTintLayer;
   _screenTintLayer = NULL;
+
+  if (_softGammaLayerDDB != NULL)
+  {
+      this->DestroyDDB(_softGammaLayerDDB);
+      _softGammaLayerDDB = NULL;
+      _softGammaSprite.bitmap = NULL;
+  }
+  delete _softGammaLayer;
+  _softGammaLayer = NULL;
 
   DestroyStageScreen();
 
@@ -1391,6 +1431,17 @@ void OGLGraphicsDriver::_render(GlobalFlipType flip, bool clearDrawListAfterward
   if (!_screenTintSprite.skip)
   {
     this->_renderSprite(&_screenTintSprite, false, false);
+  }
+  
+  if (!_softGammaSprite.skip)
+  {
+      AGS_OGLBLENDOP(GL_FUNC_ADD, GL_DST_COLOR, GL_ONE);
+      /* TODO Darken fake gamma layer ( gamma < 100 )
+      direct3ddevice->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_DESTCOLOR);
+      direct3ddevice->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_ZERO);
+      */
+      this->_renderSprite(&_softGammaSprite, false, false);
+      AGS_OGLBLENDOP(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   }
 
   if (_do_render_to_texture)

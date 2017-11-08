@@ -252,6 +252,10 @@ private:
     OGLBitmap* _screenTintLayerDDB;
     OGLDrawListEntry _screenTintSprite;
 
+    Bitmap *_softGammaLayer;
+    OGLBitmap* _softGammaLayerDDB;
+    OGLDrawListEntry _softGammaSprite;
+
     int device_screen_physical_width;
     int device_screen_physical_height;
 
@@ -315,6 +319,7 @@ private:
     void create_screen_tint_bitmap();
     void _renderSprite(OGLDrawListEntry *entry, bool globalLeftRightFlip, bool globalTopBottomFlip);
     void SetupViewport();
+    void create_soft_gamma_bitmap();
 };
 
 
