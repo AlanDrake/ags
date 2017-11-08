@@ -35,7 +35,7 @@ void CharacterExtras::ReadFromFile(Stream *in)
     process_idle_this_time = in->ReadInt8();
     slow_move_counter = in->ReadInt8();
     animwait = in->ReadInt16();
-    if (loaded_game_file_version >= kGameVersion_341)
+    if (loaded_game_file_version >= kGameVersion_341_2_DRAC)
       blend_mode = in->ReadInt16();
     else
       blend_mode = 0;
@@ -58,6 +58,6 @@ void CharacterExtras::WriteToFile(Stream *out)
     out->WriteInt8(process_idle_this_time);
     out->WriteInt8(slow_move_counter);
     out->WriteInt16(animwait);
-    if (loaded_game_file_version >= kGameVersion_341)
+    if (loaded_game_file_version >= kGameVersion_341_2_DRAC)
       out->WriteInt16(blend_mode);
 }

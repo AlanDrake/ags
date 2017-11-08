@@ -157,7 +157,7 @@ void RoomObject::ReadFromFile(Stream *in)
     in->ReadArrayOfInt16(&tint_r, 15);
     in->ReadArrayOfInt8((int8_t*)&cycling, 4);
     in->ReadArrayOfInt16(&blocking_width, 2);
-    if (loaded_game_file_version >= kGameVersion_341)
+    if (loaded_game_file_version >= kGameVersion_341_2_DRAC)
         blend_mode = in->ReadInt16();
     else
         blend_mode = 0;
@@ -169,6 +169,6 @@ void RoomObject::WriteToFile(Stream *out) const
     out->WriteArrayOfInt16(&tint_r, 15);
     out->WriteArrayOfInt8((int8_t*)&cycling, 4);
     out->WriteArrayOfInt16(&blocking_width, 2);
-    if (loaded_game_file_version >= kGameVersion_341)
+    if (loaded_game_file_version >= kGameVersion_341_2_DRAC)
         out->WriteInt16(blend_mode);
 }

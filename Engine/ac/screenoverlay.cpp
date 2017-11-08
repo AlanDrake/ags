@@ -33,7 +33,7 @@ void ScreenOverlay::ReadFromFile(Stream *in)
     associatedOverlayHandle = in->ReadInt32();
     hasAlphaChannel = in->ReadBool();
     positionRelativeToScreen = in->ReadBool();
-    if (loaded_game_file_version >= kGameVersion_341)
+    if (loaded_game_file_version >= kGameVersion_341_2_DRAC)
       blendMode = in->ReadInt32();
     else
       blendMode = 0;
@@ -52,6 +52,6 @@ void ScreenOverlay::WriteToFile(Stream *out)
     out->WriteInt32(associatedOverlayHandle);
     out->WriteBool(hasAlphaChannel);
     out->WriteBool(positionRelativeToScreen);
-    if (loaded_game_file_version >= kGameVersion_341)
+    if (loaded_game_file_version >= kGameVersion_341_2_DRAC)
       out->WriteInt32(blendMode);
 }

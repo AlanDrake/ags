@@ -7,9 +7,9 @@
 #endif
 
 #ifdef NO_MP3_PLAYER
-#define SPECIAL_VERSION "NMP"
+#define SPECIAL_VERSION "NMP_DRACONIAN"
 #else
-#define SPECIAL_VERSION ""
+#define SPECIAL_VERSION "DRACONIAN"
 #endif
 
 #define ACI_COPYRIGHT_YEARS "2011-2017"

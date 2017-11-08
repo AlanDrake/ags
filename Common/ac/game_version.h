@@ -97,6 +97,9 @@ OPT_RENDERATSCREENRES, extended engine caps check, font vertical offset.
 49 : 3.4.1.2
 Font custom line spacing.
 
+9049: 3.4.1.2 Draconian Edition
+BlendModes, Romm.Exist(), etc...
+
 */
 
 enum GameDataVersion
@@ -129,7 +132,8 @@ enum GameDataVersion
     kGameVersion_340_4          = 47,
     kGameVersion_341            = 48,
     kGameVersion_341_2          = 49,
-    kGameVersion_Current        = kGameVersion_341_2
+    kGameVersion_341_2_DRAC     = 9049,
+    kGameVersion_Current        = kGameVersion_341_2_DRAC
 };
 
 extern GameDataVersion loaded_game_file_version;

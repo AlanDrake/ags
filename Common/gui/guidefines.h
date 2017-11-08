@@ -71,8 +71,8 @@ enum GuiVersion
     kGuiVersion_330         = 116,
     kGuiVersion_331         = 117,
     kGuiVersion_340         = 118,
-    kGuiVersion_341         = 119,
-    kGuiVersion_Current     = kGuiVersion_341,
+    kGuiVersion_341_DRAC    = 119,
+    kGuiVersion_Current     = kGuiVersion_341_DRAC,
     // Defines the oldest version of gui data that is complying to current
     // savedgame format; if the loaded game data is of this version or lower,
     // then this value will be written to savedgame instead of current version.

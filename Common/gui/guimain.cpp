@@ -450,7 +450,7 @@ void GUIMain::ReadFromFile(Stream *in, GuiVersion gui_version)
     Id            = in->ReadInt32();
     Padding       = in->ReadInt32();
     BlendMode     = in->ReadInt32();
-    if (gui_version < kGuiVersion_341)
+    if (gui_version < kGuiVersion_341_DRAC)
     {
         BlendMode = 0;
     }
@@ -541,6 +541,10 @@ void GUIMain::ReadFromSavegame(Common::Stream *in)
     Transparency = in->ReadInt32();
     _visibility = (GUIVisibilityState)in->ReadInt32();
     ZOrder = in->ReadInt32();
+    if (loaded_game_file_version >= kGameVersion_341_2_DRAC)
+        BlendMode = in->ReadInt32();
+    else
+        BlendMode = 0;
     // Dynamic values
     FocusCtrl = in->ReadInt32();
     HighlightCtrl = in->ReadInt32();
@@ -562,6 +566,8 @@ void GUIMain::WriteToSavegame(Common::Stream *out) const
     out->WriteInt32(Transparency);
     out->WriteInt32(_visibility);
     out->WriteInt32(ZOrder);
+    if (loaded_game_file_version >= kGameVersion_341_2_DRAC)
+        out->WriteInt32(BlendMode);
     // Dynamic values
     out->WriteInt32(FocusCtrl);
     out->WriteInt32(HighlightCtrl);
