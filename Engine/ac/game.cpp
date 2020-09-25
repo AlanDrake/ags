@@ -152,6 +152,7 @@ int in_new_room=0, new_room_was = 0;  // 1 in new room, 2 first time in new room
 int new_room_pos=0;
 int new_room_x = SCR_NO_VALUE, new_room_y = SCR_NO_VALUE;
 int new_room_loop = SCR_NO_VALUE;
+float direction_ratio = 1.0;
 
 // initially size 1, this will be increased by the initFile function
 SpriteCache spriteset(game.SpriteInfos);
@@ -946,6 +947,11 @@ void Game_SimulateKeyPress(int key)
     if (platformKey >= 0) {
         simulate_keypress(platformKey);
     }
+}
+
+void Game_SetDirectionRatio(float ratio)
+{
+    if (ratio > 0) direction_ratio = ratio;
 }
 
 //=============================================================================
@@ -2417,6 +2423,11 @@ RuntimeScriptValue Sc_Game_SimulateKeyPress(const RuntimeScriptValue *params, in
     API_SCALL_VOID_PINT(Game_SimulateKeyPress);
 }
 
+RuntimeScriptValue Sc_Game_SetDirectionRatio(const RuntimeScriptValue *params, int32_t param_count)
+{
+    API_SCALL_VOID_PFLOAT(Game_SetDirectionRatio);
+}
+
 void RegisterGameAPI()
 {
     ccAddExternalStaticFunction("Game::IsAudioPlaying^1",                       Sc_Game_IsAudioPlaying);
@@ -2473,6 +2484,8 @@ void RegisterGameAPI()
     ccAddExternalStaticFunction("Game::get_Camera",                             Sc_Game_GetCamera);
     ccAddExternalStaticFunction("Game::get_CameraCount",                        Sc_Game_GetCameraCount);
     ccAddExternalStaticFunction("Game::geti_Cameras",                           Sc_Game_GetAnyCamera);
+
+    ccAddExternalStaticFunction("Game::SetDirectionRatio",                      Sc_Game_SetDirectionRatio);
 
     /* ----------------------- Registering unsafe exports for plugins -----------------------*/
 

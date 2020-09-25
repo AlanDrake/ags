@@ -2120,6 +2120,10 @@ builtin struct Game {
   /// Gets the number of cameras.
   import static readonly attribute int CameraCount;
 #endif
+#ifdef SCRIPT_API_v399
+  /// [exp] Sets a different ratio for the way direction is calculated (default 1.0)
+  import static void SetDirectionRatio(float ratio);
+#endif
 };
 
 builtin struct GameState {
