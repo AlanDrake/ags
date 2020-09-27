@@ -86,6 +86,7 @@ ALSoftwareGraphicsDriver::ALSoftwareGraphicsDriver()
   _origVirtualScreen = nullptr;
   virtualScreen = nullptr;
   _stageVirtualScreen = nullptr;
+  _gamma = 0;
 
   // Initialize default sprite batch, it will be used when no other batch was activated
   ALSoftwareGraphicsDriver::InitSpriteBatch(0, _spriteBatchDesc[0]);
@@ -217,21 +218,6 @@ bool ALSoftwareGraphicsDriver::SetDisplayMode(const DisplayMode &mode, volatile 
   // If we already have a gfx filter, then use it to update virtual screen immediately
   CreateVirtualScreen();
 
-#if AGS_DDRAW_GAMMA_CONTROL
-  if (!mode.Windowed)
-  {
-    memset(&ddrawCaps, 0, sizeof(ddrawCaps));
-    ddrawCaps.dwSize = sizeof(ddrawCaps);
-    IDirectDraw2_GetCaps(directdraw, &ddrawCaps, NULL);
-
-    if ((ddrawCaps.dwCaps2 & DDCAPS2_PRIMARYGAMMA) == 0) { }
-    else if (IDirectDrawSurface2_QueryInterface(gfx_directx_primary_surface->id, IID_IDirectDrawGammaControl, (void **)&dxGammaControl) == 0) 
-    {
-      dxGammaControl->GetGammaRamp(0, &defaultGammaRamp);
-    }
-  }
-#endif
-
   return true;
 }
 
@@ -272,14 +258,6 @@ void ALSoftwareGraphicsDriver::ReleaseDisplayMode()
 {
   OnModeReleased();
   ClearDrawLists();
-
-#if AGS_DDRAW_GAMMA_CONTROL
-  if (dxGammaControl != NULL) 
-  {
-    dxGammaControl->Release();
-    dxGammaControl = NULL;
-  }
-#endif
 
   DestroyVirtualScreen();
 
@@ -333,32 +311,13 @@ void ALSoftwareGraphicsDriver::UnInit()
 
 bool ALSoftwareGraphicsDriver::SupportsGammaControl() 
 {
-#if AGS_DDRAW_GAMMA_CONTROL
-
-  if (dxGammaControl != NULL) 
-  {
-    return 1;
-  }
-
-#endif
-
-  return 0;
+  return true;
 }
 
 void ALSoftwareGraphicsDriver::SetGamma(int newGamma)
 {
-#if AGS_DDRAW_GAMMA_CONTROL
-  for (int i = 0; i < 256; i++) {
-    int newValue = ((int)defaultGammaRamp.red[i] * newGamma) / 100;
-    if (newValue >= 65535)
-      newValue = 65535;
-    gammaRamp.red[i] = newValue;
-    gammaRamp.green[i] = newValue;
-    gammaRamp.blue[i] = newValue;
-  }
-
-  dxGammaControl->SetGammaRamp(0, &gammaRamp);
-#endif
+    _gamma = newGamma;
+    return;
 }
 
 int ALSoftwareGraphicsDriver::GetCompatibleBitmapFormat(int color_depth)
@@ -490,6 +449,18 @@ void ALSoftwareGraphicsDriver::RenderToBackBuffer()
             RenderSpriteBatch(batch, virtualScreen, view_offx + transform.X, view_offy + transform.Y);
         }
         _stageVirtualScreen = virtualScreen;
+    }
+
+    if (_gamma >0 && (_mode.ColorDepth > 8))
+    {
+        const int color = abs(_gamma - (_gamma>100 ? 100 : 0)) * 255 / 100;
+
+        if (_gamma > 100)
+            set_add_blender(255, 255, 255, color);
+        else
+            set_burn_blender(0, 0, 0, 255-color);
+
+        virtualScreen->TransBlendBlt(virtualScreen, 0, 0);
     }
     ClearDrawLists();
 }

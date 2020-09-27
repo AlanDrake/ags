@@ -108,6 +108,12 @@ const void (*glSwapIntervalEXT)(int) = NULL;
 
 #endif
 
+
+#define AGS_OGLBLENDOP(blend_op, src_blend, dest_blend) \
+  glBlendEquation(blend_op); \
+  glBlendFunc(src_blend, dest_blend); \
+
+
 // Necessary to update textures from 8-bit bitmaps
 extern RGB palette[256];
 
@@ -214,6 +220,7 @@ OGLGraphicsDriver::OGLGraphicsDriver()
   _can_render_to_texture = false;
   _do_render_to_texture = false;
   _super_sampling = 1;
+  _gamma = 100;
   SetupDefaultVertices();
 
   // Shifts comply to GL_RGBA
@@ -310,11 +317,12 @@ bool OGLGraphicsDriver::IsModeSupported(const DisplayMode &mode)
 
 bool OGLGraphicsDriver::SupportsGammaControl() 
 {
-  return false;
+  return true;
 }
 
 void OGLGraphicsDriver::SetGamma(int newGamma)
 {
+    _gamma = newGamma;
 }
 
 void OGLGraphicsDriver::SetGraphicsFilter(POGLFilter filter)
@@ -1416,6 +1424,43 @@ void OGLGraphicsDriver::_render(bool clearDrawListAfterwards)
     glEnable(GL_BLEND);
   }
 
+  OGLBitmap *d3db_gamma = NULL;
+  if (_gamma != 100)
+  {
+      const int color = abs(_gamma - (_gamma>100 ? 100 : 0)) * 255 / 100;
+      Bitmap *bmp = BitmapHelper::CreateBitmap(16, 16, 32);
+      bmp->Clear(makecol32(color, color, color));
+      d3db_gamma = (OGLBitmap*)this->CreateDDBFromBitmap(bmp, false, true);
+      delete bmp;
+
+      glViewport(_viewportRect.Left, _viewportRect.Top, _viewportRect.GetWidth(), _viewportRect.GetHeight());
+      glMatrixMode(GL_PROJECTION);
+      glLoadIdentity();
+      glOrtho(0, _srcRect.GetWidth(), 0, _srcRect.GetHeight(), 0, 1);
+      glMatrixMode(GL_MODELVIEW);
+      glLoadIdentity();
+
+      glDisable(GL_BLEND);
+      glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+
+      glBindTexture(GL_TEXTURE_2D, d3db_gamma->_tiles[0].texture);
+      glEnable(GL_BLEND);
+
+      if (_gamma > 100)
+      {
+          AGS_OGLBLENDOP(GL_FUNC_ADD, GL_DST_COLOR, GL_ONE);
+      } else {
+          AGS_OGLBLENDOP(GL_FUNC_ADD, GL_DST_COLOR, GL_ZERO);
+      }
+     
+      glTexCoordPointer(2, GL_FLOAT, 0, _backbuffer_texture_coordinates);
+      glVertexPointer(2, GL_FLOAT, 0, _backbuffer_vertices);
+      
+      glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+      
+      AGS_OGLBLENDOP(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  }
+
   glFinish();
 
 #if AGS_PLATFORM_OS_WINDOWS
@@ -1425,6 +1470,9 @@ void OGLGraphicsDriver::_render(bool clearDrawListAfterwards)
 #elif AGS_PLATFORM_OS_ANDROID || AGS_PLATFORM_OS_IOS
   device_swap_buffers();
 #endif
+
+  if (d3db_gamma != NULL)
+      this->DestroyDDB(d3db_gamma);
 
   if (clearDrawListAfterwards)
   {

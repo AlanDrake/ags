@@ -217,6 +217,8 @@ public:
 private:
     POGLFilter _filter;
 
+    int _gamma;
+
 #if AGS_PLATFORM_OS_WINDOWS
     HDC _hDC;
     HGLRC _hRC;

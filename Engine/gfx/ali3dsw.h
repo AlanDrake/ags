@@ -197,6 +197,8 @@ public:
 private:
     PALSWFilter _filter;
 
+    int _gamma;
+
     bool _autoVsync;
     Bitmap *_allegroScreenWrapper;
     // Virtual screen bitmap is either a wrapper over Allegro's real screen
