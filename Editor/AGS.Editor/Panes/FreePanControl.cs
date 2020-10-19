@@ -41,8 +41,8 @@ namespace AGS.Editor
         {
             // defines the shortcut for click pan Control+Shift+Left Click Hold or
             // Middle Click Hold without any modifier.
-            if ( (e.Button == MouseButtons.Left   && ModifierKeys == (Keys.Control|Keys.Shift)) ||
-                 (e.Button == MouseButtons.Middle && ModifierKeys == Keys.None) )
+            if ( (e.Button == MouseButtons.Left   && ModifierKeys == (Keys.Control|Keys.Shift)) /*||
+                 (e.Button == MouseButtons.Middle && ModifierKeys == Keys.None)*/ )
             {
                 OnPanGrab(e);
                 _panGrabPoint = e.Location;
